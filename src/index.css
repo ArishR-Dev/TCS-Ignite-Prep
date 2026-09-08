@@ -1,12 +1,40 @@
 @import "tailwindcss";
 
-/* Fluid viewport; clip (not hidden) so iOS does not create a nested scrollport that eats the first pan */
-html, body, #root {
+/* Fluid viewport with smooth momentum scrolling */
+html {
   width: 100%;
   max-width: 100%;
-  overflow-x: clip;
   box-sizing: border-box;
+  -webkit-text-size-adjust: 100%;
+  overscroll-behavior: none;
+}
+
+body {
+  width: 100%;
+  max-width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: none;
+  touch-action: pan-y;
+  box-sizing: border-box;
+  -webkit-overflow-scrolling: touch;
   -webkit-tap-highlight-color: transparent;
+}
+
+#root {
+  width: 100%;
+  max-width: 100%;
+  min-height: 100%;
+}
+
+.touch-pan-y {
+  touch-action: pan-y;
+}
+
+.touch-pan-x {
+  touch-action: pan-x;
 }
 
 *, *::before, *::after {

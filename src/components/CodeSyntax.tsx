@@ -199,8 +199,8 @@ function tokenizeCode(code: string, language: string): Token[] {
   return tokens;
 }
 
-export const CodeSyntax: React.FC<{ code: string; language: string }> = ({ code, language }) => {
-  const tokens = tokenizeCode(code, language);
+export const CodeSyntax: React.FC<{ code: string; language: string }> = React.memo(({ code, language }) => {
+  const tokens = React.useMemo(() => tokenizeCode(code, language), [code, language]);
   return (
     <>
       {tokens.map((token, idx) => (
@@ -210,4 +210,4 @@ export const CodeSyntax: React.FC<{ code: string; language: string }> = ({ code,
       ))}
     </>
   );
-};
+});

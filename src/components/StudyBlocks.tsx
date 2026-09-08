@@ -74,7 +74,7 @@ const Box: React.FC<{
 export const StudyParagraphs: React.FC<{
   paragraphs: string[];
   skin: StudySkin;
-}> = ({ paragraphs, skin }) => {
+}> = React.memo(({ paragraphs, skin }) => {
   const items: React.ReactNode[] = [];
   let bullets: string[] = [];
 
@@ -186,9 +186,9 @@ export const StudyParagraphs: React.FC<{
 
   flushBullets('b-end');
   return <div className="space-y-1.5 sm:space-y-2 min-w-0">{items}</div>;
-};
+});
 
-export const StudyKeyNotes: React.FC<{ notes: string[]; skin: StudySkin }> = ({ notes, skin }) => {
+export const StudyKeyNotes: React.FC<{ notes: string[]; skin: StudySkin }> = React.memo(({ notes, skin }) => {
   if (!notes.length) return null;
   return (
     <div className="grid sm:grid-cols-2 gap-2 sm:gap-4 mt-1 min-w-0">
@@ -205,7 +205,7 @@ export const StudyKeyNotes: React.FC<{ notes: string[]; skin: StudySkin }> = ({ 
       ))}
     </div>
   );
-};
+});
 
 function interviewLayout(label: string): 'qa' | 'question' | 'answer' | 'block' {
   if (/interview answer/i.test(label)) return 'answer';
@@ -217,7 +217,7 @@ function interviewLayout(label: string): 'qa' | 'question' | 'answer' | 'block' 
 export const StudyCallout: React.FC<{
   callout: CalloutItem;
   skin: StudySkin;
-}> = ({ callout, skin }) => {
+}> = React.memo(({ callout, skin }) => {
   let borderClass = 'border-cyan-500/40 bg-cyan-950/20';
   let badgeClass = 'bg-cyan-500/20 text-cyan-300';
   let Icon = Sparkles;
@@ -290,4 +290,4 @@ export const StudyCallout: React.FC<{
       )}
     </div>
   );
-};
+});

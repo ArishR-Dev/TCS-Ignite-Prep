@@ -7,12 +7,9 @@ import {
   ArrowRight,
   ChevronRight,
   ChevronDown,
-  Layers,
   Sliders,
-  Bookmark,
-  Sparkles,
-  Search,
-  Check
+  Check,
+  Lock
 } from 'lucide-react';
 
 interface QuickJumpModalProps {
@@ -40,15 +37,16 @@ export const QuickJumpModal: React.FC<QuickJumpModalProps> = ({
   const [sliderValue, setSliderValue] = useState<number>(currentIndex + 1);
   const [expandedSectionId, setExpandedSectionId] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [quickFilter, setQuickFilter] = useState<string>('');
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Directly derive locked status for any slide from the global isDocsCompleted flag
+  const isSlideLocked = (targetIdx: number): boolean => !isDocsCompleted && targetIdx > 1;
 
   useEffect(() => {
     if (isOpen) {
       setInputSlideNumber(String(currentIndex + 1));
       setSliderValue(currentIndex + 1);
       setErrorMsg(null);
-      setQuickFilter('');
       // Auto-expand the section of the current slide
       const currentSectionId = slides[currentIndex]?.sectionId;
       setExpandedSectionId(currentSectionId || null);
@@ -59,8 +57,8 @@ export const QuickJumpModal: React.FC<QuickJumpModalProps> = ({
   if (!isOpen) return null;
 
   const handleSelectWithGate = (targetIdx: number) => {
-    if (!isDocsCompleted && targetIdx > 1) {
-      setErrorMsg('Please check all items before continuing.');
+    if (isSlideLocked(targetIdx)) {
+      setErrorMsg('Please complete Slide #2 (Mandatory Documents Checklist) to unlock all slides.');
       onAttemptBlockedSlide?.();
       return;
     }
@@ -83,6 +81,7 @@ export const QuickJumpModal: React.FC<QuickJumpModalProps> = ({
   // Preview target slide when dragging slider
   const previewIndex = Math.max(0, Math.min(slides.length - 1, sliderValue - 1));
   const previewSlide = slides[previewIndex];
+  const isPreviewLocked = isSlideLocked(sliderValue - 1);
 
   // Quick milestone markers
   const milestones = [
@@ -221,7 +220,11 @@ export const QuickJumpModal: React.FC<QuickJumpModalProps> = ({
                 onClick={() => {
                   handleSelectWithGate(sliderValue - 1);
                 }}
-                className="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-cyan-500/50 cursor-pointer transition-all flex items-center justify-between gap-2 group active:scale-[0.99]"
+                className={`p-2.5 rounded-xl border cursor-pointer transition-all flex items-center justify-between gap-2 group active:scale-[0.99] ${
+                  isPreviewLocked
+                    ? 'bg-slate-950/80 border-slate-800 hover:border-slate-700 opacity-75'
+                    : 'bg-slate-900/90 border-slate-800 hover:border-cyan-500/50'
+                }`}
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5 mb-0.5">
@@ -231,19 +234,37 @@ export const QuickJumpModal: React.FC<QuickJumpModalProps> = ({
                     <span className="text-[9px] uppercase font-mono text-slate-400 bg-slate-800 px-1 py-0.2 rounded">
                       {previewSlide.sectionId}
                     </span>
-                    {bookmarkedSlideIds.includes(previewSlide.id) && (
+                    {isPreviewLocked ? (
+                      <span className="text-amber-400 text-[10px] font-mono flex items-center gap-0.5">
+                        <Lock className="w-2.5 h-2.5" /> Locked
+                      </span>
+                    ) : bookmarkedSlideIds.includes(previewSlide.id) ? (
                       <span className="text-amber-400 text-[10px]">★ Bookmarked</span>
-                    )}
+                    ) : null}
                   </div>
-                  <p className="text-xs font-semibold text-white truncate group-hover:text-cyan-300 transition-colors">
+                  <p className={`text-xs font-semibold truncate transition-colors ${
+                    isPreviewLocked ? 'text-slate-400' : 'text-white group-hover:text-cyan-300'
+                  }`}>
                     {previewSlide.slideTitle}
                   </p>
                 </div>
                 <button
                   type="button"
-                  className="px-2.5 py-1 rounded-lg bg-cyan-500/20 text-cyan-300 text-[11px] font-bold font-mono group-hover:bg-cyan-500 group-hover:text-slate-950 transition-colors flex items-center gap-1 flex-shrink-0"
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold font-mono transition-colors flex items-center gap-1 flex-shrink-0 ${
+                    isPreviewLocked
+                      ? 'bg-slate-800 text-amber-400 border border-slate-700'
+                      : 'bg-cyan-500/20 text-cyan-300 group-hover:bg-cyan-500 group-hover:text-slate-950'
+                  }`}
                 >
-                  Open <ArrowRight className="w-3 h-3" />
+                  {isPreviewLocked ? (
+                    <>
+                      <Lock className="w-3 h-3" /> Locked
+                    </>
+                  ) : (
+                    <>
+                      Open <ArrowRight className="w-3 h-3" />
+                    </>
+                  )}
                 </button>
               </div>
             )}
@@ -256,23 +277,27 @@ export const QuickJumpModal: React.FC<QuickJumpModalProps> = ({
             </span>
             <div className="grid grid-cols-3 gap-1.5">
               {milestones.map(m => {
+                const targetIdx = m.num - 1;
+                const isLocked = isSlideLocked(targetIdx);
                 const isActive = currentIndex + 1 === m.num;
                 return (
                   <button
                     key={m.num}
                     type="button"
                     onClick={() => {
-                      handleSelectWithGate(m.num - 1);
+                      handleSelectWithGate(targetIdx);
                     }}
                     className={`p-2 rounded-lg border text-left transition-all flex flex-col justify-between min-h-[50px] cursor-pointer ${
-                      isActive
+                      isLocked
+                        ? 'bg-slate-950/60 border-slate-800/80 opacity-60 hover:border-slate-700'
+                        : isActive
                         ? 'bg-cyan-950/60 border-cyan-400 shadow-md shadow-cyan-950'
                         : 'bg-slate-900/60 border-slate-800 hover:border-slate-700 hover:bg-slate-850'
                     }`}
                   >
                     <div className="flex items-center justify-between w-full">
                       <span className="text-[10px] font-mono text-cyan-400 font-bold">#{m.num}</span>
-                      <span className="text-xs">{m.icon}</span>
+                      <span className="text-xs">{isLocked ? '🔒' : m.icon}</span>
                     </div>
                     <span className="text-[10px] font-medium text-slate-200 truncate w-full mt-1">
                       {m.label}
@@ -300,6 +325,7 @@ export const QuickJumpModal: React.FC<QuickJumpModalProps> = ({
                 const lastSlideIndex = firstSlideIndex + secSlides.length - 1;
                 const isCurrentSec = slides[currentIndex]?.sectionId === sec.id;
                 const isExpanded = expandedSectionId === sec.id;
+                const isFirstSlideLocked = isSlideLocked(firstSlideIndex);
 
                 return (
                   <div
@@ -338,10 +364,14 @@ export const QuickJumpModal: React.FC<QuickJumpModalProps> = ({
                         onClick={() => {
                           handleSelectWithGate(firstSlideIndex);
                         }}
-                        className="px-2 py-1 rounded-md bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-800/60 text-cyan-300 text-[10px] font-mono font-bold whitespace-nowrap flex-shrink-0"
+                        className={`px-2 py-1 rounded-md border text-[10px] font-mono font-bold whitespace-nowrap flex-shrink-0 transition-colors ${
+                          isFirstSlideLocked
+                            ? 'bg-slate-800/80 border-slate-700 text-slate-400 hover:bg-slate-800'
+                            : 'bg-cyan-950/80 hover:bg-cyan-900 border-cyan-800/60 text-cyan-300'
+                        }`}
                         title="Jump to first slide of section"
                       >
-                        Start #{firstSlideIndex + 1}
+                        {isFirstSlideLocked ? 'Locked' : `Start #${firstSlideIndex + 1}`}
                       </button>
                     </div>
 
@@ -352,6 +382,7 @@ export const QuickJumpModal: React.FC<QuickJumpModalProps> = ({
                           const sIdx = slides.findIndex(item => item.id === s.id);
                           const isCurrent = sIdx === currentIndex;
                           const isBookmarked = bookmarkedSlideIds.includes(s.id);
+                          const isLocked = isSlideLocked(sIdx);
 
                           return (
                             <button
@@ -361,7 +392,9 @@ export const QuickJumpModal: React.FC<QuickJumpModalProps> = ({
                                 handleSelectWithGate(sIdx);
                               }}
                               className={`w-full p-1.5 rounded-lg text-left text-xs transition-colors flex items-center justify-between gap-2 ${
-                                isCurrent
+                                isLocked
+                                  ? 'opacity-50 hover:bg-slate-900/50 text-slate-400'
+                                  : isCurrent
                                   ? 'bg-cyan-950/60 text-cyan-300 border border-cyan-600/40 font-semibold'
                                   : 'hover:bg-slate-850 text-slate-300'
                               }`}
@@ -374,11 +407,17 @@ export const QuickJumpModal: React.FC<QuickJumpModalProps> = ({
                               </div>
 
                               <div className="flex items-center gap-1 flex-shrink-0">
-                                {isBookmarked && (
-                                  <span className="text-amber-400 text-[10px]">★</span>
-                                )}
-                                {isCurrent && (
-                                  <Check className="w-3 h-3 text-cyan-400" />
+                                {isLocked ? (
+                                  <Lock className="w-3 h-3 text-amber-400" />
+                                ) : (
+                                  <>
+                                    {isBookmarked && (
+                                      <span className="text-amber-400 text-[10px]">★</span>
+                                    )}
+                                    {isCurrent && (
+                                      <Check className="w-3 h-3 text-cyan-400" />
+                                    )}
+                                  </>
                                 )}
                               </div>
                             </button>
@@ -414,8 +453,7 @@ export const QuickJumpModal: React.FC<QuickJumpModalProps> = ({
           <button
             type="button"
             onClick={() => {
-              onSelectSlide(slides.length - 1);
-              onClose();
+              handleSelectWithGate(slides.length - 1);
             }}
             className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-mono font-medium transition-colors"
           >
@@ -427,3 +465,4 @@ export const QuickJumpModal: React.FC<QuickJumpModalProps> = ({
     </div>
   );
 };
+

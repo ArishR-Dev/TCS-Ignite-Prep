@@ -138,47 +138,17 @@ export default function App() {
     }
   }, [currentSlideIndex]);
 
-  const [footerClearance, setFooterClearance] = useState(120);
-
-  useEffect(() => {
-    const footer = document.querySelector<HTMLElement>('[data-app-footer]');
-    if (!footer) return;
-
-    const measure = () => {
-      const rect = footer.getBoundingClientRect();
-      const fromBottom = window.innerHeight - rect.top;
-      setFooterClearance(Math.max(96, Math.ceil(fromBottom + 12)));
-    };
-
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(footer);
-    window.addEventListener('resize', measure, { passive: true });
-    window.addEventListener('orientationchange', measure, { passive: true });
-    return () => {
-      observer.disconnect();
-      window.removeEventListener('resize', measure);
-      window.removeEventListener('orientationchange', measure);
-    };
-  }, []);
-
-  // Guaranteed cleanup for modal overflow lock
+  // Clean modal overflow lock for body only
   useEffect(() => {
     const isAnyModalOpen =
       isGridOpen || isSearchOpen || isQuickJumpOpen || isExportOpen || isModelSelectorOpen || isNiKiOpen;
-    const html = document.documentElement;
     if (isAnyModalOpen) {
-      const prevBody = document.body.style.overflow;
-      const prevHtml = html.style.overflow;
       document.body.style.overflow = 'hidden';
-      html.style.overflow = 'hidden';
       return () => {
-        document.body.style.overflow = prevBody;
-        html.style.overflow = prevHtml;
+        document.body.style.overflow = '';
       };
     }
     document.body.style.overflow = '';
-    html.style.overflow = '';
   }, [isGridOpen, isSearchOpen, isQuickJumpOpen, isExportOpen, isModelSelectorOpen, isNiKiOpen]);
 
   const handleNext = () => {
@@ -279,10 +249,7 @@ export default function App() {
       />
 
       {/* Main Presentation Stage */}
-      <main
-        className="flex-1 flex flex-col items-center justify-start sm:justify-center p-2 sm:p-6 lg:p-8 w-full max-w-full min-w-0"
-        style={{ paddingBottom: `calc(${footerClearance}px + env(safe-area-inset-bottom, 0px))` }}
-      >
+      <main className="flex-1 flex flex-col items-center justify-start sm:justify-center p-2 sm:p-6 lg:p-8 pb-[calc(7.5rem+env(safe-area-inset-bottom,0px))] sm:pb-[calc(6.5rem+env(safe-area-inset-bottom,0px))] w-full max-w-full min-w-0">
         <SlideViewer
           slide={currentSlide}
           totalSlides={slides.length}

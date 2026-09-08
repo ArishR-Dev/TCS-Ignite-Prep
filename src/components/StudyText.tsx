@@ -50,27 +50,34 @@ const HIGHLIGHT_TERMS = [
   'TCL',
 ];
 
-const TERM_REGEX = new RegExp(`\\b(${HIGHLIGHT_TERMS.map(escapeRegExp).join('|')})\\b`, 'g');
-
-const COMPLEXITY_REGEX = /O\([^)]+\)/g;
-
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-export const StudyText: React.FC<{ text: string; className?: string }> = ({ text, className }) => {
+// Pre-compile regular expression pattern once at the module level
+const COMBINED_PATTERN = new RegExp(
+  `\\b(${HIGHLIGHT_TERMS.map(escapeRegExp).join('|')})\\b|O\\([^)]+\\)`,
+  'g'
+);
+
+export const StudyText: React.FC<{ text: string; className?: string }> = React.memo(({ text, className }) => {
   if (!text) return null;
 
+  // Clone regex object to have clean lastIndex per text string
+  const regex = new RegExp(COMBINED_PATTERN.source, 'g');
   const pieces: React.ReactNode[] = [];
   let cursor = 0;
-  const combined = new RegExp(`${TERM_REGEX.source}|${COMPLEXITY_REGEX.source}`, 'g');
   let match: RegExpExecArray | null;
 
-  while ((match = combined.exec(text)) !== null) {
+  while ((match = regex.exec(text)) !== null) {
     if (match.index > cursor) {
       pieces.push(text.slice(cursor, match.index));
     }
     const token = match[0];
+    if (token.length === 0) {
+      regex.lastIndex++;
+      continue;
+    }
     const isComplexity = token.startsWith('O(');
     pieces.push(
       <span
@@ -92,9 +99,10 @@ export const StudyText: React.FC<{ text: string; className?: string }> = ({ text
   }
 
   return <span className={className}>{pieces}</span>;
-};
+});
 
-export const StudyMultiline: React.FC<{ text: string; className?: string }> = ({ text, className }) => {
+export const StudyMultiline: React.FC<{ text: string; className?: string }> = React.memo(({ text, className }) => {
+  if (!text) return null;
   const lines = text.split('\n');
   return (
     <div className={className}>
@@ -123,4 +131,4 @@ export const StudyMultiline: React.FC<{ text: string; className?: string }> = ({
       })}
     </div>
   );
-};
+});

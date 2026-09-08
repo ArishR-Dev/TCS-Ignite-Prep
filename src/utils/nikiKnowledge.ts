@@ -335,8 +335,232 @@ ${tip ? `💡 **Interview Tip:** ${tip.content}\n` : ''}
 *Ask me anything specific about this slide, or type "quiz me" to test your recall!*`;
   }
 
-  // Specific high-frequency topics
-  if (cleanQuery.includes('oop') || cleanQuery.includes('object oriented')) {
+  // Specific Conversation Starter 1: Complete last-minute TCS Ignite interview revision
+  if (
+    cleanQuery.includes('last-minute') ||
+    cleanQuery.includes('interview revision') ||
+    cleanQuery.includes('complete last-minute tcs ignite')
+  ) {
+    return `### ⚡ Complete Last-Minute TCS Ignite Interview Revision (High-Yield Master Sheet)
+
+Here is your high-impact revision breakdown across the 6 crucial interview stations:
+
+---
+
+#### 1. 📋 Mandatory Gatekeeper & Verification (Slide #2)
+- **Strict Rule:** Hard physical printouts only—**soft copies on mobile phones are rejected**.
+- **Essential 7:** Interview Invite Mail, Application Form, Hard-copy Resume, PAN Card, Unmasked E-Aadhar (fresh download), 10th/12th marksheets, College marksheets till 4th sem + 1 full set of xerox copies.
+
+---
+
+#### 2. 🏛️ Core OOP 4 Pillars (Slides #10–#16)
+- **Encapsulation:** Wrapping data attributes and methods into a single class; restricts direct unauthorized state access (\`private\`, getters/setters).
+- **Inheritance:** Child class derives properties from Parent class for code reusability (\`extends\`, \`super()\`).
+- **Polymorphism:** "Many forms." Overloading (compile-time, same name different arguments) vs Overriding (run-time, child redefines parent method).
+- **Abstraction:** Hiding internal complex logic and exposing clean interfaces (\`abstract class\`, \`interface\`).
+
+---
+
+#### 3. 💾 DBMS & SQL Fundamentals (Slides #27–#56)
+- **ACID Properties:** **A**tomicity (all-or-nothing), **C**onsistency (valid state transitions), **I**solation (concurrent transactions don't collide), **D**urability (committed changes persist).
+- **Keys:** Primary Key (unique + NOT NULL), Unique Key (unique + permits 1 NULL), Candidate Key (minimal super key).
+- **Normalization:** **1NF** = atomic values; **2NF** = 1NF + no partial key dependency; **3NF** = 2NF + no transitive dependency ($A \\rightarrow B \\rightarrow C$).
+- **SQL JOINs:**
+  - \`INNER JOIN\`: exact matches in both tables.
+  - \`LEFT JOIN\`: all rows from left table + matched right rows (NULL if missing).
+  - \`FULL OUTER JOIN\`: all records from both tables.
+
+---
+
+#### 4. ⚡ SQL Commands Hierarchy (Slides #42–#47)
+- **DDL:** \`CREATE\`, \`ALTER\`, \`DROP\`, \`TRUNCATE\` (auto-committed, modifies structure).
+- **DML:** \`SELECT\`, \`INSERT\`, \`UPDATE\`, \`DELETE\` (can be rolled back, manipulates data rows).
+- **DROP vs TRUNCATE vs DELETE:** \`DROP\` deletes table schema; \`TRUNCATE\` deallocates all rows fast (keeps schema); \`DELETE\` removes specific rows row-by-row with \`WHERE\`.
+
+---
+
+#### 5. 🐍 Coding Essentials (Slide #57)
+- **List vs Tuple (Python):** List is mutable (\`[ ]\`), Tuple is immutable (\`( )\`).
+- **Common Interview Questions:** Palindrome check, Fibonacci series, Factorial recursion, reversing a string or array, finding duplicate elements.
+
+---
+
+#### 6. 💼 TCS HR Round Must-Knows (Slides #65–#73)
+- **Why TCS?** World leader in IT, ethical Tata values, global learning programs (Ignite & Elevate).
+- **Relocation & Night Shifts:** Answer with an immediate, confident, unconditional **"YES! I am completely ready to relocate anywhere in India and support client shifts."**
+- **Introduction:** Present (degree/specialization) → Past (project/achievement) → Future (why TCS matches your trajectory).
+
+***
+💡 *Need deep practice? Click **"Test me on SQL and DBMS"** or ask me to explain any specific slide!*`;
+  }
+
+  // Specific Conversation Starter 2: TCS Ignite hiring information
+  if (
+    cleanQuery.includes('ignite hiring') ||
+    cleanQuery.includes('latest ignite') ||
+    cleanQuery.includes('tcs website and tell me the latest ignite') ||
+    cleanQuery.includes('ignite hiring information')
+  ) {
+    return `### 🌐 Latest TCS Ignite Hiring & Program Information
+
+Based on official TCS talent acquisition and the TCS Ignite program structure:
+
+---
+
+#### 1. What is TCS Ignite?
+**TCS Ignite** is Tata Consultancy Services' flagship technology career acceleration program specifically created for non-engineering science graduates (**B.Sc & BCA**). It transforms science students into specialized Software Engineers, Data Engineers, and Enterprise Consultants.
+
+---
+
+#### 2. Unique Advantage: Sponsored MCA Degree
+- Candidates selected for TCS Ignite are sponsored by TCS for an **MCA degree (from SASTRA Deemed University)**.
+- You pursue the MCA degree during weekends/evenings while earning your full regular salary and working on live global projects!
+
+---
+
+#### 3. Eligibility Criteria for TCS Ignite
+- **Qualifying Degrees:** B.Sc (Computer Science, IT, Mathematics, Statistics, Physics, Chemistry, Electronics) or BCA.
+- **Academic Cutoff:** Minimum **50% or 5.0 CGPA** aggregate across 10th, 12th, and all semesters of graduation.
+- **Backlogs:** Up to 1 active backlog permitted at the time of appearing, must be cleared before onboarding.
+- **Academic Gap:** Maximum permissible gap of **2 years** with valid justification.
+
+---
+
+#### 4. Selection Process & Phases
+1. **TCS National Qualifier Test (NQT) / Cognitive Assessment:** Numerical Ability, Verbal Ability, and Reasoning.
+2. **Technical Interview:** Focuses on Object-Oriented Programming (OOP), DBMS, basic SQL queries, Python/C basics, and academic projects.
+3. **HR & Managerial Round:** Document verification, communication skills, willingness to relocate to any delivery center across India, and readiness for rotational shifts.
+
+---
+
+#### 5. Training Campus
+- Initial immersive training is conducted at the state-of-the-art **TCS Ignite Learning Center in Bangalore (Tower B, Yeshwanthpur)** before project deployment.
+
+***
+💡 *Official Portal:* Registration takes place via the **TCS NextStep Portal** (\`https://nextstep.tcs.com\`) under the "IT" track.`;
+  }
+
+  // Specific Conversation Starter 3: Test me on SQL and DBMS
+  if (
+    cleanQuery.includes('test me on sql and dbms') ||
+    cleanQuery.includes('test on sql and dbms') ||
+    cleanQuery.includes('quiz on sql and dbms')
+  ) {
+    return `### 💾 TCS Technical Interview Drill: SQL & DBMS
+
+Let's test your core database knowledge with 4 high-yield questions frequently asked in TCS Ignite interviews. Answer one or all of them in the chat!
+
+---
+
+#### 🔹 Question 1 (Concepts & Keys)
+**"What is the difference between a Primary Key and a Unique Key in SQL? Can a table have multiple Unique Keys?"**
+
+#### 🔹 Question 2 (Joins & Results)
+**"Suppose Table A has 4 rows \`[1, 1, 2, 3]\` and Table B has 3 rows \`[1, 1, 4]\`. How many rows will an \`INNER JOIN\` on the matching column produce?"**
+
+#### 🔹 Question 3 (Commands & Performance)
+**"What is the practical difference between \`DELETE\`, \`TRUNCATE\`, and \`DROP\`? Which one can be rolled back with TCL commands?"**
+
+#### 🔹 Question 4 (Filtering & Aggregates)
+**"Why can't we use aggregate functions like \`COUNT()\` or \`SUM()\` in a \`WHERE\` clause? Which clause must be used instead?"**
+
+---
+
+👉 *Type your answer below! I'll grade your response, point out what you did well, and provide an interview-ready explanation.*`;
+  }
+
+  // Specific Conversation Starter 4: Beginner explanation + Interview-ready answer
+  if (
+    (cleanQuery.includes('beginner') && cleanQuery.includes('interview-ready')) ||
+    cleanQuery.includes('explain this topic like i\'m a complete beginner')
+  ) {
+    if (currentSlide) {
+      const topicName = currentSlide.slideTitle;
+      const snippet = currentSlide.content.paragraphs?.[0] || currentSlide.content.bullets?.[0] || '';
+      return `### ✦ ${topicName} (Slide #${currentSlide.slideNumber})
+
+---
+
+#### 🐣 Part 1: Explained Like You're a Beginner (The Real-World Analogy)
+Imagine you are building with LEGO blocks or setting up a personal digital notebook:
+- **Concept:** ${snippet || `${topicName} allows software to structure data and operations clearly.`}
+- **Why it matters:** Without this concept, software code becomes disorganized and repetitive. With it, we build modular, reusable, and secure components that can be maintained effortlessly.
+
+---
+
+#### 💼 Part 2: Interview-Ready Answer (Say this to the Interviewer)
+> *"In software engineering, **${topicName}** is a core design principle used to structure systems efficiently. Specifically, in this context: ${currentSlide.slideSubtitle || 'it establishes clear contracts between data models and operational behaviors'}. By applying this, we ensure high code maintainability, clean separation of concerns, and optimal system performance."*
+
+---
+
+#### 🎯 Likely Follow-up from Interviewer:
+> *"Can you give a practical code example or explain when you would avoid using this?"*
+
+💡 *Ask me: **"Show me the code example for this"** and I'll generate a clean Python or SQL snippet for this exact slide!*`;
+    }
+
+    return `### 🐣 Beginner to Interview-Ready Blueprint:
+
+Since you're on the overview, here is the universal framework to answer any technical question:
+
+1. **The 10-Second Beginner Analogy:** Relate the concept to everyday objects (e.g. Encapsulation = medical capsule; Inheritance = parent-child genes; Primary Key = citizen passport number).
+2. **The Formal Definition:** State the precise technical term in one sentence.
+3. **The 'Why':** Explain the architectural benefit (e.g. prevents redundancy, ensures transactional consistency, enhances security).
+4. **The Code / Syntax:** Cite an exact method, clause, or snippet.
+
+👉 *Navigate to any specific slide (like Slide #11 Inheritance or Slide #28 SQL Joins) and ask me this again!*`;
+  }
+
+  // Specific Conversation Starter 5: Most important TCS Ignite HR questions with natural answers
+  if (
+    cleanQuery.includes('important tcs ignite hr questions') ||
+    cleanQuery.includes('hr questions with natural answers') ||
+    cleanQuery.includes('tcs ignite hr questions')
+  ) {
+    return `### 💼 Top 5 TCS Ignite HR Questions with Natural, Interview-Winning Answers
+
+Here are the 5 most critical HR questions asked in the TCS Ignite interview, with conversational, confident, and natural model answers:
+
+---
+
+#### 1. "Why do you want to join TCS after B.Sc / BCA instead of pursuing regular M.Sc / MCA?"
+**🌟 Natural Answer:**
+> *"While higher education was an option, **TCS Ignite** offers the ultimate combination of real enterprise experience and sponsored education. Through TCS's partnership with SASTRA University, I can earn my MCA degree while simultaneously gaining hands-on software development experience with global clients. Learning on the job while advancing my degree is far more valuable to me than purely classroom theory."*
+
+---
+
+#### 2. "Tell me about yourself."
+**🌟 Natural Answer (Present-Past-Future):**
+> *"I am a final-year B.Sc Computer Science / BCA student with a strong passion for software development, object-oriented design, and relational databases. During my degree, I built projects like an online management system using Python and SQL. I am excited to begin my professional career with TCS because of its structured learning culture and global scale."*
+
+---
+
+#### 3. "Are you ready to relocate anywhere in India and work in rotational or night shifts?"
+**🌟 Natural Answer (Must be unconditional):**
+> *"Yes, absolutely! I am 100% prepared and enthusiastic about relocating to any TCS delivery center across India. As an aspiring tech professional, I understand that TCS supports 24/7 global operations, and I am completely comfortable working rotational day or night shifts."*
+
+---
+
+#### 4. "What are your greatest strength and weakness?"
+**🌟 Natural Answer:**
+> *"My greatest strength is my rapid adaptability and discipline when learning new frameworks and tools. For instance, when I learned SQL, I practiced real query scenarios every day until I felt confident. My area of improvement was public presentation; to overcome it, I actively volunteered to present my team's project seminars, which significantly strengthened my communication."*
+
+---
+
+#### 5. "Where do you see yourself in 3 to 5 years at TCS?"
+**🌟 Natural Answer:**
+> *"In 3 to 5 years, I see myself having successfully completed my sponsored MCA, grown into a skilled Full-Stack Developer or Module Specialist at TCS, and contributing directly to high-impact enterprise solutions while mentoring newer joinees."*
+
+***
+💡 *Want to practice? Type **"Interview me"** and we will conduct a live mock HR round!*`;
+  }
+
+  if (
+    cleanQuery.includes('what is oop') ||
+    cleanQuery.includes('object oriented') ||
+    cleanQuery.includes('pillars of oop') ||
+    cleanQuery === 'oop'
+  ) {
     return `### 🏛️ Object-Oriented Programming (OOP) Core Concepts
 
 OOP organizes software around **objects** (data + behaviors) rather than pure actions and logic.

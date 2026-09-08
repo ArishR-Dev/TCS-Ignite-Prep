@@ -8,6 +8,7 @@ import { QuickJumpModal } from './components/QuickJumpModal';
 import { ExportModal } from './components/ExportModal';
 import { PresentationControls } from './components/PresentationControls';
 import { EunchaeChat } from './components/EunchaeChat';
+import { EunchaeModelModal, CHATGPT_EUNCHAE_URL } from './components/EunchaeModelModal';
 import { initializeContentIndex } from './utils/eunchaeEngine';
 import { AlertCircle } from 'lucide-react';
 
@@ -50,8 +51,23 @@ export default function App() {
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isNiKiOpen, setIsNiKiOpen] = useState(false);
+  const [isModelSelectorOpen, setIsModelSelectorOpen] = useState(false);
   const [externalNiKiPrompt, setExternalNiKiPrompt] = useState<string | null>(null);
   const [blockedToastMessage, setBlockedToastMessage] = useState<string | null>(null);
+
+  const handleOpenEunchae = () => {
+    setIsModelSelectorOpen(true);
+  };
+
+  const handleSelectGoogleAI = () => {
+    setIsModelSelectorOpen(false);
+    setIsNiKiOpen(true);
+  };
+
+  const handleSelectChatGPT = () => {
+    setIsModelSelectorOpen(false);
+    window.open(CHATGPT_EUNCHAE_URL, '_blank', 'noopener,noreferrer');
+  };
 
   const triggerBlockedMessage = () => {
     setBlockedToastMessage('Please check all items before continuing.');
@@ -144,10 +160,10 @@ export default function App() {
   };
 
   const handleAskNiKiAboutSlide = (targetSlide: Slide) => {
-    setIsNiKiOpen(true);
     setExternalNiKiPrompt(
       `Hey! 👋 I want to understand Slide #${targetSlide.slideNumber}: "${targetSlide.slideTitle}". Could you explain this topic, provide an example, and share interview tips?`
     );
+    setIsModelSelectorOpen(true);
   };
 
   const toggleFullscreen = () => {
@@ -202,7 +218,7 @@ export default function App() {
         bookmarkedSlideIds={bookmarkedSlideIds}
         onToggleBookmark={handleToggleBookmark}
         onOpenQuickJump={() => setIsQuickJumpOpen(true)}
-        onOpenNiKi={() => setIsNiKiOpen(true)}
+        onOpenNiKi={handleOpenEunchae}
       />
 
       {/* Main Presentation Stage */}
@@ -269,9 +285,20 @@ export default function App() {
         isOpen={isNiKiOpen}
         onClose={() => setIsNiKiOpen(false)}
         currentSlide={currentSlide}
+        allSlides={slides}
+        currentSlideIndex={currentSlideIndex}
         onOpenSlide={handleSelectSlide}
         externalTriggerPrompt={externalNiKiPrompt}
         onClearExternalPrompt={() => setExternalNiKiPrompt(null)}
+        onOpenModelModal={handleOpenEunchae}
+      />
+
+      {/* Eunchae AI Model Selector Modal */}
+      <EunchaeModelModal
+        isOpen={isModelSelectorOpen}
+        onClose={() => setIsModelSelectorOpen(false)}
+        onSelectGoogleAI={handleSelectGoogleAI}
+        onSelectChatGPT={handleSelectChatGPT}
       />
     </div>
   );

@@ -14,7 +14,6 @@ import {
   Layers,
   ArrowRight,
   ArrowLeft,
-  Bookmark,
   ChevronLeft,
   ChevronRight,
   Lock
@@ -30,6 +29,7 @@ interface SlideViewerProps {
   onCompleteDocuments?: () => void;
   onAttemptBlockedNext?: () => void;
   onAskNiKi?: (slide: Slide) => void;
+  isExportMode?: boolean;
 }
 
 export const SlideViewer: React.FC<SlideViewerProps> = ({
@@ -41,19 +41,20 @@ export const SlideViewer: React.FC<SlideViewerProps> = ({
   onToggleBookmark,
   onCompleteDocuments,
   onAttemptBlockedNext,
-  onAskNiKi
+  onAskNiKi,
+  isExportMode = false
 }) => {
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
   // Dynamic viewport-aware font, padding, and spacing scaling hook
-  const { typography, spacing, isTinyMobile, isMobile } = useResponsiveSlideScale();
+  const { typography, spacing, isTinyMobile, isMobile } = useResponsiveSlideScale(isExportMode);
 
   // Touch gesture hook with velocity detection, visual drag feedback, and internal scroll isolation
   const { dragOffset, swipeFeedback, handlers } = useSlideSwipe({
-    onNext,
-    onPrev,
-    canSwipePrev: slide.slideNumber > 1,
-    canSwipeNext: slide.isMandatoryChecklist ? false : slide.slideNumber < totalSlides,
+    onNext: isExportMode ? undefined : onNext,
+    onPrev: isExportMode ? undefined : onPrev,
+    canSwipePrev: !isExportMode && slide.slideNumber > 1,
+    canSwipeNext: !isExportMode && (slide.isMandatoryChecklist ? false : slide.slideNumber < totalSlides),
     threshold: 38,
     velocityThreshold: 20,
     maxDragOffset: 70,
@@ -68,12 +69,20 @@ export const SlideViewer: React.FC<SlideViewerProps> = ({
   return (
     <div
       id="slide-canvas"
-      {...handlers}
-      style={{
-        transform: dragOffset !== 0 ? `translateX(${dragOffset}px)` : undefined,
-        transition: dragOffset === 0 ? 'transform 0.25s ease-out' : 'none'
-      }}
-      className={`w-full max-w-6xl mx-auto flex flex-col justify-between min-h-[auto] sm:min-h-[640px] bg-gradient-to-b from-[#0f172a] to-[#0b0f19] border border-slate-800/80 rounded-xl sm:rounded-2xl ${spacing.containerPadding} shadow-2xl shadow-cyan-950/20 relative overflow-hidden transition-all duration-300 select-text touch-pan-y`}
+      {...(isExportMode ? {} : handlers)}
+      style={
+        isExportMode
+          ? { width: '1920px', height: '1080px', minWidth: '1920px', minHeight: '1080px', boxSizing: 'border-box' }
+          : {
+              transform: dragOffset !== 0 ? `translateX(${dragOffset}px)` : undefined,
+              transition: dragOffset === 0 ? 'transform 0.25s ease-out' : 'none'
+            }
+      }
+      className={
+        isExportMode
+          ? 'w-[1920px] h-[1080px] p-12 flex flex-col justify-between bg-gradient-to-b from-[#0f172a] to-[#0b0f19] relative overflow-hidden select-text border border-slate-800/80 rounded-none shadow-none'
+          : `w-full max-w-6xl mx-auto flex flex-col justify-between min-h-[auto] sm:min-h-[640px] bg-gradient-to-b from-[#0f172a] to-[#0b0f19] border border-slate-800/80 rounded-xl sm:rounded-2xl ${spacing.containerPadding} shadow-2xl shadow-cyan-950/20 relative overflow-hidden transition-all duration-300 select-text touch-pan-y`
+      }
     >
       {/* Subtle background ambient tech glow */}
       <div className="absolute -top-32 -right-32 w-72 sm:w-96 h-72 sm:h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -126,24 +135,7 @@ export const SlideViewer: React.FC<SlideViewerProps> = ({
         </div>
 
         <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs font-mono text-slate-400 flex-shrink-0">
-          {onToggleBookmark && (
-            <button
-              onClick={() => onToggleBookmark(slide.id)}
-              className={`flex items-center gap-1 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md border transition-all cursor-pointer min-h-[30px] sm:min-h-auto ${
-                isBookmarked
-                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/60 shadow-sm shadow-amber-500/20'
-                  : 'bg-slate-900/80 text-slate-400 border-slate-700/80 hover:text-amber-300 hover:border-amber-500/40'
-              }`}
-              title={isBookmarked ? 'Bookmarked (Click to unpin)' : 'Bookmark slide for quick revision (Press B)'}
-            >
-              <Bookmark className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${isBookmarked ? 'fill-amber-400 text-amber-400' : ''}`} />
-              <span className="hidden xs:inline sm:inline text-[10px] sm:text-[11px] font-sans font-medium">
-                {isBookmarked ? 'Pinned' : 'Pin'}
-              </span>
-            </button>
-          )}
-
-          <div className="flex items-center gap-1 pl-1">
+          <div className="flex items-center gap-1">
             <span className="text-cyan-400 font-bold">SLIDE {slide.slideNumber}</span>
             <span className="text-slate-600">/</span>
             <span>{totalSlides}</span>
@@ -170,6 +162,7 @@ export const SlideViewer: React.FC<SlideViewerProps> = ({
             onComplete={onCompleteDocuments || onNext || (() => {})}
             onAttemptIncomplete={onAttemptBlockedNext}
             isMobile={isMobile}
+            isExportMode={isExportMode}
           />
         </div>
       ) : slide.isDivider ? (
@@ -365,49 +358,64 @@ export const SlideViewer: React.FC<SlideViewerProps> = ({
       )}
 
       {/* Slide Bottom Bar Navigation & Mobile Swipe Hint */}
-      <div className={`${spacing.blockMargin} border-t border-slate-800/80 flex items-center justify-between text-[11px] sm:text-xs text-slate-500 relative z-10`}>
-        <div className="flex items-center gap-1.5 font-mono text-[10px] sm:text-xs">
-          <span className="sm:hidden text-cyan-400 font-semibold flex items-center gap-1">
-            <ArrowLeft className="w-3 h-3 animate-pulse" /> Swipe to flip <ArrowRight className="w-3 h-3 animate-pulse" />
-          </span>
-          <span className="hidden sm:inline">TCS B.Sc Ignite Prep</span>
-          <span className="hidden sm:inline">•</span>
-          <span className="hidden sm:inline text-cyan-400">Subashini</span>
+      {isExportMode ? (
+        <div className="mt-6 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400 relative z-10 font-mono">
+          <div className="flex items-center gap-2">
+            <span className="text-slate-300 font-semibold">TCS Ignite Interview Preparation Handbook</span>
+            <span className="text-slate-600">•</span>
+            <span className="text-cyan-400 font-medium">{slide.sectionTitle}</span>
+          </div>
+          <div className="flex items-center gap-1.5 text-slate-400">
+            <span className="text-cyan-400 font-bold">SLIDE {slide.slideNumber}</span>
+            <span className="text-slate-600">/</span>
+            <span>{totalSlides}</span>
+          </div>
         </div>
+      ) : (
+        <div className={`${spacing.blockMargin} border-t border-slate-800/80 flex items-center justify-between text-[11px] sm:text-xs text-slate-500 relative z-10`}>
+          <div className="flex items-center gap-1.5 font-mono text-[10px] sm:text-xs">
+            <span className="sm:hidden text-cyan-400 font-semibold flex items-center gap-1">
+              <ArrowLeft className="w-3 h-3 animate-pulse" /> Swipe to flip <ArrowRight className="w-3 h-3 animate-pulse" />
+            </span>
+            <span className="hidden sm:inline">TCS B.Sc Ignite Prep</span>
+            <span className="hidden sm:inline">•</span>
+            <span className="hidden sm:inline text-cyan-400">Subashini</span>
+          </div>
 
-        <div className="flex items-center gap-1.5 sm:gap-3">
-          {onPrev && (
-            <button
-              onClick={onPrev}
-              disabled={slide.slideNumber <= 1}
-              className="px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-slate-300 font-medium transition-colors text-[11px] sm:text-xs min-h-[34px] sm:min-h-[36px] flex items-center cursor-pointer"
-            >
-              Previous
-            </button>
-          )}
-          {onNext && (
-            slide.isMandatoryChecklist ? (
+          <div className="flex items-center gap-1.5 sm:gap-3">
+            {onPrev && (
               <button
-                type="button"
-                onClick={onAttemptBlockedNext}
-                className="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-amber-300 hover:border-amber-500/40 border border-slate-700 font-medium transition-colors flex items-center gap-1.5 text-[11px] sm:text-xs min-h-[34px] sm:min-h-[36px] cursor-pointer"
-                title="Verify all 7 documents to unlock"
+                onClick={onPrev}
+                disabled={slide.slideNumber <= 1}
+                className="px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-slate-300 font-medium transition-colors text-[11px] sm:text-xs min-h-[34px] sm:min-h-[36px] flex items-center cursor-pointer"
               >
-                <Lock className="w-3.5 h-3.5 text-amber-400" />
-                <span>Verify 7 Items</span>
+                Previous
               </button>
-            ) : (
-              <button
-                onClick={onNext}
-                disabled={slide.slideNumber >= totalSlides}
-                className="px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 disabled:opacity-30 text-white font-medium transition-colors flex items-center gap-1 text-[11px] sm:text-xs min-h-[34px] sm:min-h-[36px] cursor-pointer"
-              >
-                Next <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            )
-          )}
+            )}
+            {onNext && (
+              slide.isMandatoryChecklist ? (
+                <button
+                  type="button"
+                  onClick={onAttemptBlockedNext}
+                  className="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-amber-300 hover:border-amber-500/40 border border-slate-700 font-medium transition-colors flex items-center gap-1.5 text-[11px] sm:text-xs min-h-[34px] sm:min-h-[36px] cursor-pointer"
+                  title="Verify all 7 documents to unlock"
+                >
+                  <Lock className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Verify 7 Items</span>
+                </button>
+              ) : (
+                <button
+                  onClick={onNext}
+                  disabled={slide.slideNumber >= totalSlides}
+                  className="px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 disabled:opacity-30 text-white font-medium transition-colors flex items-center gap-1 text-[11px] sm:text-xs min-h-[34px] sm:min-h-[36px] cursor-pointer"
+                >
+                  Next <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              )
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

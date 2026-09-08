@@ -1,4 +1,4 @@
-import { Slide } from '../types';
+import { Slide, DynamicWebsiteContext, KnowledgeChunk, EunchaeSourceType } from '../types';
 import { allSlidesWithChecklist } from '../data/allSlides';
 
 /**
@@ -494,4 +494,209 @@ export function setCachedAnswer(cacheKey: string, answer: string): void {
 
 export function computeCacheKey(message: string, currentSlideId?: string, mode?: string): string {
   return `${normalizeText(message)}::${currentSlideId || 'none'}::${mode || 'chat'}`;
+}
+
+/**
+ * Builds the comprehensive dynamic website context object for Eunchae.
+ * Provides the AI with direct awareness of the currently active screen,
+ * visible text, section metadata, and spatial continuity with adjacent slides.
+ */
+export function buildDynamicWebsiteContext(
+  currentSlide: Slide | null | undefined,
+  allSlides: Slide[] = allSlidesWithChecklist,
+  currentSlideIndex?: number
+): DynamicWebsiteContext {
+  if (!currentSlide) {
+    return {
+      currentPage: 'Cover Slide (Handbook Overview)',
+      currentSlideId: 'cover',
+      currentSlideTitle: 'TCS Ignite Interview Preparation Handbook',
+      currentSection: 'Introduction & Logistics',
+      currentSlideContent: 'Welcome to the TCS Ignite Interview Preparation Handbook for Tower B, Yeshwanthpur.',
+      visibleText: 'TCS Ignite Interview Preparation Handbook. Select any slide or ask Eunchae a question to start studying.',
+      nearbySlideContent: ''
+    };
+  }
+
+  const resolvedIndex = currentSlideIndex !== undefined && currentSlideIndex >= 0
+    ? currentSlideIndex
+    : allSlides.findIndex(s => s.id === currentSlide.id);
+
+  const total = allSlides.length;
+  const pageNumber = resolvedIndex >= 0 ? resolvedIndex + 1 : currentSlide.slideNumber;
+  const currentPage = `Slide ${pageNumber} of ${total} (${currentSlide.sectionTitle})`;
+
+  const currentSlideContent = buildCurrentSlideContext(currentSlide);
+
+  // High-density visible text (the core information visible on the user's screen right now)
+  const visibleParts: string[] = [
+    `TITLE: ${currentSlide.slideTitle}`,
+    currentSlide.slideSubtitle ? `SUBTITLE: ${currentSlide.slideSubtitle}` : '',
+    ...(currentSlide.content.paragraphs || []),
+    ...(currentSlide.content.bullets || []).map(b => `• ${b}`),
+    ...(currentSlide.content.keyNotes || []).map(k => `Note: ${k}`),
+    ...(currentSlide.content.callouts || []).map(c => `[${c.type.toUpperCase()}] ${c.label}: ${c.content}`),
+    ...(currentSlide.content.codeBlocks || []).map(cb => `Code (${cb.language}):\n${cb.code}${cb.output ? `\nOutput: ${cb.output}` : ''}`)
+  ].filter(Boolean);
+
+  const visibleText = visibleParts.join('\n');
+
+  // Nearby slide context (spatial continuity: 1 slide before, 1 slide after)
+  const nearbyParts: string[] = [];
+  if (resolvedIndex > 0) {
+    const prev = allSlides[resolvedIndex - 1];
+    nearbyParts.push(`[Previous Slide #${prev.slideNumber}: "${prev.slideTitle}" (${prev.sectionTitle}) - Tags: ${(prev.tags || []).slice(0, 3).join(', ')}]`);
+  }
+  if (resolvedIndex >= 0 && resolvedIndex < total - 1) {
+    const next = allSlides[resolvedIndex + 1];
+    nearbyParts.push(`[Next Slide #${next.slideNumber}: "${next.slideTitle}" (${next.sectionTitle}) - Tags: ${(next.tags || []).slice(0, 3).join(', ')}]`);
+  }
+
+  const nearbySlideContent = nearbyParts.join('\n');
+
+  return {
+    currentPage,
+    currentSlideId: currentSlide.id,
+    currentSlideTitle: currentSlide.slideTitle,
+    currentSection: currentSlide.sectionTitle,
+    currentSlideContent,
+    visibleText,
+    nearbySlideContent
+  };
+}
+
+/**
+ * Converts search hits into standardized KnowledgeChunks for the RAG architecture
+ */
+export function convertToKnowledgeChunks(hits: SearchHit[]): KnowledgeChunk[] {
+  return hits.map(hit => ({
+    id: `chunk-${hit.entry.slideId}`,
+    slideId: hit.entry.slideId,
+    title: hit.entry.title,
+    section: hit.entry.section,
+    content: hit.snippet,
+    keywords: Array.from(hit.entry.keywords).slice(0, 8),
+    topic: hit.entry.tags?.[0] || hit.entry.section
+  }));
+}
+
+export interface RoutingAnalysis {
+  routingCase: 'case_a' | 'case_b' | 'case_c' | 'case_d' | 'case_e' | 'case_f';
+  primarySource: EunchaeSourceType;
+  needsWebSearch: boolean;
+  isDeictic: boolean;
+  isFollowUp: boolean;
+  reasoning: string;
+  topScore: number;
+}
+
+/**
+ * Smart Question Routing Engine
+ * Flow:
+ * USER QUESTION -> QUESTION ANALYZER -> CURRENT WEBSITE CONTENT -> ENTIRE WEBSITE KNOWLEDGE -> WEB SEARCH IF REQUIRED -> CONTEXT BUILDER -> EUNCHAE
+ *
+ * Case A: Current content answers it (Current Website Content)
+ * Case B: Current content doesn't answer it, but website knowledge base does (Study Material)
+ * Case C: Website doesn't contain the answer (Web Search Fallback)
+ * Case D: User explicitly asks for web/current/external information (Web Search)
+ * Case E: User asks about "this" / deictic reference (Current Website Content)
+ * Case F: User asks a follow-up (Conversation Memory + Current Website Context)
+ */
+export function analyzeQuestionRouting(
+  query: string,
+  currentSlide: Slide | null | undefined,
+  topHits: SearchHit[],
+  historyLength: number = 0
+): RoutingAnalysis {
+  const normQuery = normalizeText(query);
+  const topScore = topHits[0]?.score || 0;
+
+  // Case D: User explicitly asks for web research, current year/live info, or outside knowledge
+  const isExplicitWebRequest = /(search (the )?(web|internet|online|current tcs website|tcs website|website)|look up online|google this|latest ignite|ignite hiring|latest version|in 2026|current ceo|who is the ceo|current market|latest news|current trend|latest release)/i.test(query);
+  if (isExplicitWebRequest) {
+    return {
+      routingCase: 'case_d',
+      primarySource: 'web_research',
+      needsWebSearch: true,
+      isDeictic: false,
+      isFollowUp: false,
+      reasoning: 'User explicitly requested live, current, or web-based information.',
+      topScore
+    };
+  }
+
+  // Case E: User asks about "this" or refers to the currently visible screen ("Look at the website" behavior)
+  const isDeictic = /^(explain this|what is this|what does this mean|why(\?|$)|give an example|i don't understand this|explain the above|what should i remember|is this important|what can interviewer ask from this|explain simply|summarize this|simplify this|tell me about this)/i.test(query.trim())
+    || query.toLowerCase().includes('this slide')
+    || query.toLowerCase().includes('this topic')
+    || query.toLowerCase().includes('this concept');
+
+  if (isDeictic && currentSlide) {
+    return {
+      routingCase: 'case_e',
+      primarySource: 'current_website',
+      needsWebSearch: false,
+      isDeictic: true,
+      isFollowUp: false,
+      reasoning: 'Query contains deictic reference to currently visible slide content.',
+      topScore
+    };
+  }
+
+  // Case F: User asks a short follow-up in ongoing conversation
+  const isFollowUp = historyLength >= 2 && /^(can you give another|give another example|why is that|and what about|how does it differ|what else|continue|elaborate|can you show code|more examples)/i.test(query.trim());
+  if (isFollowUp) {
+    return {
+      routingCase: 'case_f',
+      primarySource: currentSlide ? 'current_website' : 'study_material',
+      needsWebSearch: false,
+      isDeictic: false,
+      isFollowUp: true,
+      reasoning: 'Query is a follow-up relying on short-term conversation memory.',
+      topScore
+    };
+  }
+
+  // Case A: Current slide content directly answers the question
+  if (currentSlide) {
+    const currentSlideTitleNorm = normalizeText(currentSlide.slideTitle);
+    const queryTokens = tokenizeText(query);
+    const slideMatches = queryTokens.some(t => currentSlideTitleNorm.includes(t)) || (topHits[0]?.entry.slideId === currentSlide.id && topScore >= 18);
+
+    if (slideMatches) {
+      return {
+        routingCase: 'case_a',
+        primarySource: 'current_website',
+        needsWebSearch: false,
+        isDeictic: false,
+        isFollowUp: false,
+        reasoning: 'Question is directly addressed by currently active slide content.',
+        topScore
+      };
+    }
+  }
+
+  // Case B: Current slide does not answer it, but website study material does
+  if (topHits.length > 0 && topScore >= 20) {
+    return {
+      routingCase: 'case_b',
+      primarySource: 'study_material',
+      needsWebSearch: false,
+      isDeictic: false,
+      isFollowUp: false,
+      reasoning: 'Question matched relevant study material in the indexed website knowledge base.',
+      topScore
+    };
+  }
+
+  // Case C: Question is outside the website's study material -> Trigger Web Search
+  return {
+    routingCase: 'case_c',
+    primarySource: 'web_research',
+    needsWebSearch: true,
+    isDeictic: false,
+    isFollowUp: false,
+    reasoning: 'Question is outside the handbook material. Engaging authoritative web search fallback.',
+    topScore
+  };
 }

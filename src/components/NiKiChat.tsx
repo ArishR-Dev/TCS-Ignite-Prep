@@ -18,42 +18,132 @@ import {
   CheckCircle2,
   Bot,
   Activity,
-  Zap
+  Zap,
+  Globe,
+  Monitor,
+  ExternalLink
 } from 'lucide-react';
 
 interface NiKiChatProps {
   isOpen: boolean;
   onClose: () => void;
   currentSlide: Slide | null;
+  allSlides?: Slide[];
+  currentSlideIndex?: number;
   onOpenSlide?: (slideNumber: number) => void;
   externalTriggerPrompt?: string | null;
   onClearExternalPrompt?: () => void;
+  onOpenModelModal?: () => void;
 }
 
-const QUICK_SUGGESTIONS = [
-  'Explain OOP in simple words',
-  'What should I prepare for HR?',
-  'Explain SQL Joins',
-  'Quiz me',
-  "Explain this like I'm 5",
-  'What documents should I carry?'
+export interface ConversationStarter {
+  id: string;
+  icon: string;
+  title: string;
+  badge: string;
+  prompt: string;
+  gradient: string;
+  border: string;
+}
+
+export const CONVERSATION_STARTERS: ConversationStarter[] = [
+  {
+    id: 'starter-revision',
+    icon: '⚡',
+    title: 'Last-Minute Revision',
+    badge: 'Master Review',
+    prompt: 'Give me a complete last-minute TCS Ignite interview revision.',
+    gradient: 'from-amber-950/40 to-slate-900/80',
+    border: 'border-amber-500/40 hover:border-amber-400'
+  },
+  {
+    id: 'starter-hiring',
+    icon: '🌐',
+    title: 'Latest Ignite Hiring Info',
+    badge: 'Live Research',
+    prompt: 'Search the current TCS website and tell me the latest Ignite hiring information.',
+    gradient: 'from-blue-950/40 to-slate-900/80',
+    border: 'border-blue-500/40 hover:border-blue-400'
+  },
+  {
+    id: 'starter-sql',
+    icon: '💾',
+    title: 'SQL & DBMS Test',
+    badge: 'Practice Drill',
+    prompt: 'Test me on SQL and DBMS for the TCS interview.',
+    gradient: 'from-emerald-950/40 to-slate-900/80',
+    border: 'border-emerald-500/40 hover:border-emerald-400'
+  },
+  {
+    id: 'starter-explain',
+    icon: '🐣',
+    title: 'Beginner to Interview-Ready',
+    badge: 'Slide Context',
+    prompt: "Explain this topic like I'm a complete beginner, then give me an interview-ready answer.",
+    gradient: 'from-cyan-950/40 to-slate-900/80',
+    border: 'border-cyan-500/40 hover:border-cyan-400'
+  },
+  {
+    id: 'starter-hr',
+    icon: '💼',
+    title: 'Top TCS Ignite HR Questions',
+    badge: 'HR Round',
+    prompt: 'Give me the most important TCS Ignite HR questions with natural answers.',
+    gradient: 'from-purple-950/40 to-slate-900/80',
+    border: 'border-purple-500/40 hover:border-purple-400'
+  }
 ];
+
+const getDynamicSuggestions = (slide: Slide | null): string[] => {
+  if (!slide) {
+    return [
+      'Explain OOP in simple words',
+      'What should I prepare for HR?',
+      'Explain SQL Joins',
+      'Quiz me',
+      'What documents should I carry?'
+    ];
+  }
+
+  const base = [
+    'Explain this simply',
+    'Give me an example',
+    'What can interviewer ask from this?',
+    'Quiz me on this'
+  ];
+
+  if (slide.sectionId === 'oop') {
+    base.push('Real-life analogy for this');
+  } else if (slide.sectionId === 'joins' || slide.sectionId === 'basic_sql' || slide.sectionId === 'commands') {
+    base.push('Show example SQL query');
+  } else if (slide.sectionId === 'hr') {
+    base.push('What should I answer for this?');
+  } else if (slide.sectionId === 'agenda') {
+    base.push('What is the reporting procedure?');
+  }
+
+  return base.slice(0, 5);
+};
 
 const INITIAL_GREETING: ChatMessage = {
   id: 'greeting-msg',
   role: 'assistant',
-  text: `Hi! I'm **Eunchae** 👋\nAsk me anything about your interview preparation.`,
+  text: `Hi! I'm **Eunchae ✦** — your interview prep companion 👋\n\nI can explain any slide on your screen, answer doubts from your study material, or research live technical facts on the web.\n\nAsk me anything or choose a suggested question below!`,
   timestamp: Date.now(),
-  mode: 'chat'
+  mode: 'chat',
+  source: 'current_website'
 };
 
 export const NiKiChat: React.FC<NiKiChatProps> = ({
   isOpen,
   onClose,
   currentSlide,
+  allSlides,
+  currentSlideIndex,
   onOpenSlide,
   externalTriggerPrompt,
-  onClearExternalPrompt
+  onClearExternalPrompt,
+  onOpenModelModal
 }) => {
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
     try {
@@ -70,13 +160,16 @@ export const NiKiChat: React.FC<NiKiChatProps> = ({
 
   const [inputPrompt, setInputPrompt] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [searchStatus, setSearchStatus] = useState<'idle' | 'searching' | 'generating'>('idle');
+  const [searchStatus, setSearchStatus] = useState<'idle' | 'searching' | 'web_research' | 'generating'>('idle');
   const [showDevDebug, setShowDevDebug] = useState(false);
   const [activeMode, setActiveMode] = useState<'chat' | 'interview' | 'quiz'>('chat');
   const [includeSlideContext, setIncludeSlideContext] = useState(true);
+  const [showAllStarters, setShowAllStarters] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const dynamicSuggestions = getDynamicSuggestions(currentSlide);
 
   // Auto-scroll on new message
   const scrollToBottom = () => {
@@ -130,6 +223,8 @@ export const NiKiChat: React.FC<NiKiChatProps> = ({
         message: query,
         history: [...messages, userMessage],
         currentSlide: includeSlideContext ? currentSlide : null,
+        allSlides,
+        currentSlideIndex,
         mode: activeMode,
         onSearchStatusChange: setSearchStatus
       });
@@ -141,6 +236,9 @@ export const NiKiChat: React.FC<NiKiChatProps> = ({
         timestamp: Date.now(),
         slideRef: currentSlide?.slideNumber,
         mode: response.mode,
+        source: response.source,
+        webSources: response.webSources,
+        routingCase: response.routingCase,
         debugMeta: response.meta ? {
           ...response.meta,
           source: response.source
@@ -230,7 +328,35 @@ export const NiKiChat: React.FC<NiKiChatProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5">
+          {/* Model Switcher Badge */}
+          {onOpenModelModal && (
+            <button
+              type="button"
+              onClick={onOpenModelModal}
+              className="flex items-center gap-1 px-2 py-1 rounded-lg bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-700/60 text-cyan-300 text-[10px] font-medium transition-colors cursor-pointer shadow-xs"
+              title="Switch Model (1. Google AI vs 2. ChatGPT)"
+            >
+              <Sparkles className="w-3 h-3 text-cyan-400" />
+              <span className="font-mono hidden sm:inline">Google AI</span>
+              <span className="font-mono sm:hidden">Model</span>
+              <ChevronDown className="w-2.5 h-2.5 text-slate-400" />
+            </button>
+          )}
+
+          {/* Direct link to ChatGPT Eunchae */}
+          <a
+            href="https://chatgpt.com/g/g-6a9ffbc4796081919b9f14a3e7f2f39b-eunchae"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hidden sm:inline-flex items-center gap-1 px-1.5 py-1 rounded-lg bg-emerald-950/50 hover:bg-emerald-900/70 border border-emerald-800/40 text-emerald-300 text-[10px] font-medium transition-colors cursor-pointer"
+            title="Open Eunchae on ChatGPT GPT (opens in new tab)"
+          >
+            <Bot className="w-3 h-3 text-emerald-400" />
+            <span className="font-mono">ChatGPT</span>
+            <ExternalLink className="w-2.5 h-2.5 text-emerald-400/80" />
+          </a>
+
           <button
             type="button"
             onClick={() => setShowDevDebug(prev => !prev)}
@@ -317,25 +443,27 @@ export const NiKiChat: React.FC<NiKiChatProps> = ({
 
       {/* Active Slide Context Banner */}
       {currentSlide && (
-        <div className="px-3 py-1.5 bg-slate-900/40 border-b border-slate-800/50 flex items-center justify-between text-[11px] text-slate-300 flex-shrink-0">
-          <div className="flex items-center gap-1.5 truncate pr-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse flex-shrink-0" />
-            <span className="text-slate-400">Context:</span>
-            <span className="text-cyan-300 font-semibold truncate font-mono">
-              #{currentSlide.slideNumber} {currentSlide.slideTitle}
+        <div className="px-3.5 py-2 bg-slate-900/60 border-b border-cyan-500/20 flex items-center justify-between text-[11px] text-slate-300 flex-shrink-0">
+          <div className="flex items-center gap-2 truncate pr-2">
+            <span className="text-cyan-400 font-semibold flex items-center gap-1.5 flex-shrink-0">
+              <span>📖</span>
+              <span className="text-slate-400 font-normal">Current topic:</span>
+            </span>
+            <span className="text-white font-medium truncate">
+              {currentSlide.slideTitle} <span className="text-slate-500 text-[10px]">({currentSlide.sectionTitle})</span>
             </span>
           </div>
           <button
             type="button"
             onClick={() => setIncludeSlideContext(prev => !prev)}
-            className={`text-[10px] px-1.5 py-0.5 rounded border transition-colors cursor-pointer flex-shrink-0 ${
+            className={`text-[10px] px-2 py-0.5 rounded-full border font-mono transition-colors cursor-pointer flex-shrink-0 ${
               includeSlideContext
-                ? 'bg-cyan-950 text-cyan-300 border-cyan-800/60'
+                ? 'bg-cyan-950/80 text-cyan-300 border-cyan-700/60 shadow-xs'
                 : 'bg-slate-800 text-slate-500 border-slate-700'
             }`}
-            title={includeSlideContext ? 'Slide context attached to queries' : 'Slide context ignored'}
+            title={includeSlideContext ? 'Slide context is attached to queries' : 'Slide context ignored'}
           >
-            {includeSlideContext ? 'Active' : 'Muted'}
+            {includeSlideContext ? 'Screen Context: ON' : 'Screen Context: OFF'}
           </button>
         </div>
       )}
@@ -358,8 +486,66 @@ export const NiKiChat: React.FC<NiKiChatProps> = ({
                     : 'bg-slate-900/90 border border-slate-800/90 text-slate-200 rounded-tl-sm shadow-md'
                 }`}
               >
+                {!isUser && (
+                  <div className="flex items-center gap-1.5 mb-2 flex-wrap">
+                    {message.source === 'current_website' && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-cyan-950/90 text-cyan-300 border border-cyan-700/60 shadow-xs">
+                        <Monitor className="w-3 h-3 text-cyan-400" />
+                        <span>Current Website</span>
+                      </span>
+                    )}
+                    {message.source === 'study_material' && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-950/90 text-emerald-300 border border-emerald-700/60 shadow-xs">
+                        <BookOpen className="w-3 h-3 text-emerald-400" />
+                        <span>Study Material</span>
+                      </span>
+                    )}
+                    {message.source === 'web_research' && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-950/90 text-amber-300 border border-amber-700/60 shadow-xs">
+                        <Globe className="w-3 h-3 text-amber-400" />
+                        <span>Web Research</span>
+                      </span>
+                    )}
+                    {message.routingCase && (
+                      <span className="text-[9px] font-mono text-slate-400">
+                        {message.routingCase === 'case_a' || message.routingCase === 'case_e' ? '• Screen Context' : message.routingCase === 'case_b' ? '• Handbook RAG' : message.routingCase === 'case_c' || message.routingCase === 'case_d' ? '• Web Grounding' : '• Memory'}
+                      </span>
+                    )}
+                  </div>
+                )}
+
                 {!isUser ? (
-                  <NiKiMarkdownRenderer content={message.text} />
+                  <>
+                    <NiKiMarkdownRenderer content={message.text} />
+                    {message.webSources && message.webSources.length > 0 && (
+                      <div className="mt-3 pt-2.5 border-t border-slate-800/80 text-[11px] text-slate-400 space-y-1">
+                        <div className="font-semibold text-amber-300/90 flex items-center gap-1">
+                          <Globe className="w-3 h-3 text-amber-400" />
+                          <span>Web Research Citations:</span>
+                        </div>
+                        <div className="space-y-1 pl-1">
+                          {message.webSources.map((src, idx) => (
+                            <div key={idx} className="flex items-center gap-1.5 truncate">
+                              <span className="text-slate-500">•</span>
+                              {src.url ? (
+                                <a
+                                  href={src.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-cyan-400 hover:text-cyan-300 hover:underline flex items-center gap-1 truncate"
+                                >
+                                  <span className="truncate">{src.title || src.url}</span>
+                                  <ExternalLink className="w-2.5 h-2.5 flex-shrink-0" />
+                                </a>
+                              ) : (
+                                <span className="text-slate-300 truncate">{src.title}</span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <p className="whitespace-pre-wrap leading-relaxed">{message.text}</p>
                 )}
@@ -374,20 +560,71 @@ export const NiKiChat: React.FC<NiKiChatProps> = ({
                   )}
                 </div>
 
-                {/* Optional Development / Performance Diagnostics */}
+                {/* Development / Performance Diagnostics */}
                 {showDevDebug && !isUser && message.debugMeta && (
-                  <div className="text-[10px] font-mono text-cyan-300/90 bg-slate-900/90 border border-cyan-800/50 rounded-lg px-2.5 py-1.5 space-y-0.5 shadow-sm max-w-full">
+                  <div className="text-[10px] font-mono text-cyan-300/90 bg-slate-900/95 border border-cyan-800/50 rounded-lg px-2.5 py-2 space-y-1 shadow-sm max-w-full">
                     <div className="text-cyan-400 font-semibold text-[10px] flex items-center gap-1">
                       <Zap className="w-3 h-3 text-cyan-400" />
-                      <span>Eunchae Performance Metrics</span>
+                      <span>Eunchae Performance & Routing</span>
                     </div>
-                    <div>Search time: <span className="text-white">{message.debugMeta.searchTimeMs} ms</span></div>
-                    <div>Relevant chunks: <span className="text-white">{message.debugMeta.hitsCount}</span></div>
                     {message.debugMeta.currentSlide && (
-                      <div className="truncate">Current slide: <span className="text-white">{message.debugMeta.currentSlide}</span></div>
+                      <div className="truncate">Current Context: <span className="text-white">{message.debugMeta.currentSlide}</span></div>
                     )}
-                    <div>AI response time: <span className="text-white">{message.debugMeta.aiResponseTimeMs ?? 0} ms</span></div>
-                    <div>Total latency: <span className="text-white">{message.debugMeta.totalTimeMs} ms</span> {message.debugMeta.cacheHit && <span className="text-emerald-400 font-bold ml-1">(Cache Hit)</span>}</div>
+                    <div>Local Search: <span className="text-white">{message.debugMeta.searchTimeMs} ms</span></div>
+                    <div>Retrieved Chunks: <span className="text-white">{message.debugMeta.hitsCount}</span></div>
+                    <div>Web Search: <span className={message.debugMeta.needsWebSearch ? 'text-amber-400 font-bold' : 'text-slate-400'}>{message.debugMeta.needsWebSearch ? 'Yes' : 'No'}</span></div>
+                    <div>Memory: <span className="text-white">{message.debugMeta.memoryCount ?? 0} messages</span></div>
+                    <div>Source: <span className="text-white font-semibold">{message.debugMeta.source === 'current_website' ? 'Current Website' : message.debugMeta.source === 'web_research' ? 'Web Research' : message.debugMeta.source === 'study_material' ? 'Study Material' : 'Session Cache'}</span></div>
+                    <div>Total Latency: <span className="text-white">{message.debugMeta.totalTimeMs} ms</span> {message.debugMeta.cacheHit && <span className="text-emerald-400 font-bold ml-1">(Cache Hit)</span>}</div>
+                  </div>
+                )}
+
+                {/* Conversation Starters Deck right under the initial greeting */}
+                {message.id === 'greeting-msg' && messages.length <= 2 && (
+                  <div className="w-full mt-3 p-3 sm:p-4 rounded-2xl bg-gradient-to-b from-slate-900/95 via-slate-900/80 to-slate-950/90 border border-cyan-500/30 shadow-lg shadow-cyan-950/50 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <div className="flex items-center justify-between mb-2.5">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-amber-400 text-sm">⚡</span>
+                        <h3 className="text-xs font-bold text-white font-['Plus_Jakarta_Sans'] tracking-wide">
+                          TCS Ignite Conversation Starters
+                        </h3>
+                      </div>
+                      <span className="text-[10px] font-mono text-cyan-400 bg-cyan-950/80 px-2 py-0.5 rounded-full border border-cyan-800/60">
+                        5 Key Questions
+                      </span>
+                    </div>
+
+                    <p className="text-[11px] text-slate-400 mb-3">
+                      Tap any prompt below to start an interactive revision session with Eunchae:
+                    </p>
+
+                    <div className="grid grid-cols-1 gap-2">
+                      {CONVERSATION_STARTERS.map(starter => (
+                        <button
+                          key={starter.id}
+                          type="button"
+                          onClick={() => handleSendMessage(starter.prompt)}
+                          className={`group relative text-left p-2.5 sm:p-3 rounded-xl bg-gradient-to-r ${starter.gradient} border ${starter.border} transition-all cursor-pointer hover:shadow-md hover:scale-[1.01] active:scale-[0.99]`}
+                        >
+                          <div className="flex items-start gap-2.5">
+                            <span className="text-base flex-shrink-0 mt-0.5">{starter.icon}</span>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between gap-2 mb-0.5">
+                                <span className="text-xs font-bold text-white group-hover:text-cyan-200 transition-colors truncate">
+                                  {starter.title}
+                                </span>
+                                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-slate-800/80 text-slate-300 border border-slate-700/60 flex-shrink-0">
+                                  {starter.badge}
+                                </span>
+                              </div>
+                              <p className="text-[11px] text-slate-300 leading-snug font-sans line-clamp-2">
+                                "{starter.prompt}"
+                              </p>
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
@@ -395,7 +632,7 @@ export const NiKiChat: React.FC<NiKiChatProps> = ({
           );
         })}
 
-        {/* Loading / Dual-Stage Typing Indicator */}
+        {/* Loading / Multi-Stage Typing Indicator */}
         {isLoading && (
           <div className="flex items-start gap-2.5 text-xs text-cyan-400 animate-in fade-in duration-150">
             <EunchaeLogo size={28} showSparkle={false} glow={true} className="mt-0.5" />
@@ -406,9 +643,11 @@ export const NiKiChat: React.FC<NiKiChatProps> = ({
                 <span className="w-2 h-2 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: '300ms' }} />
               </div>
               <span className="text-slate-200 text-xs font-sans font-medium">
-                {searchStatus === 'searching'
-                  ? 'Searching your preparation material... 🔎'
-                  : 'Eunchae is thinking... ✦'}
+                {searchStatus === 'web_research'
+                  ? 'Researching the web for live facts... 🌐'
+                  : searchStatus === 'searching'
+                  ? 'Reading screen & searching study material... 🔎'
+                  : 'Eunchae is crafting your explanation... ✦'}
               </span>
             </div>
           </div>
@@ -417,27 +656,55 @@ export const NiKiChat: React.FC<NiKiChatProps> = ({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Suggested Quick Questions */}
-      {messages.length <= 2 && (
-        <div className="px-3 sm:px-4 py-2 bg-slate-900/40 border-t border-slate-800/40 flex-shrink-0">
-          <div className="text-[10px] uppercase font-mono text-slate-500 mb-1.5 flex items-center gap-1">
-            <HelpCircle className="w-3 h-3 text-cyan-400" />
-            <span>Suggested Questions:</span>
+      {/* Conversation Starters & Suggestions Bar */}
+      <div className="px-3 sm:px-4 py-2 bg-slate-900/70 border-t border-slate-800/70 flex-shrink-0">
+        <div className="flex items-center justify-between text-[10px] uppercase font-mono text-slate-400 mb-1.5">
+          <div className="flex items-center gap-1.5">
+            <Sparkles className="w-3 h-3 text-amber-400" />
+            <span className="text-slate-300 font-semibold">TCS Ignite Starters:</span>
           </div>
-          <div className="flex flex-wrap gap-1.5">
-            {QUICK_SUGGESTIONS.map((suggestion, idx) => (
+          <button
+            type="button"
+            onClick={() => setShowAllStarters(prev => !prev)}
+            className="text-[10px] text-cyan-400 hover:text-cyan-300 transition-colors cursor-pointer font-sans"
+          >
+            {showAllStarters ? 'Collapse ▴' : 'View All (5) ▾'}
+          </button>
+        </div>
+
+        {/* 5 Conversation Starters */}
+        <div className={`flex ${showAllStarters ? 'flex-col' : 'overflow-x-auto custom-scrollbar no-scrollbar'} gap-1.5 pb-1`}>
+          {CONVERSATION_STARTERS.map(starter => (
+            <button
+              key={starter.id}
+              type="button"
+              onClick={() => handleSendMessage(starter.prompt)}
+              className="text-[11px] px-2.5 py-1 rounded-lg bg-slate-800/90 hover:bg-cyan-950 text-slate-200 hover:text-cyan-200 border border-slate-700/80 hover:border-cyan-500/50 transition-all cursor-pointer flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap text-left shadow-xs active:scale-[0.98]"
+              title={starter.prompt}
+            >
+              <span className="text-xs">{starter.icon}</span>
+              <span className="font-medium">{starter.title}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* Slide-Specific Suggestions when available and when collapsed */}
+        {!showAllStarters && currentSlide && dynamicSuggestions.length > 0 && (
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-1 mt-1 border-t border-slate-800/50">
+            <span className="text-[9px] font-mono text-slate-500 flex-shrink-0">Slide:</span>
+            {dynamicSuggestions.slice(0, 3).map((suggestion, idx) => (
               <button
                 key={idx}
                 type="button"
                 onClick={() => handleSendMessage(suggestion)}
-                className="text-[11px] px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-cyan-950/80 text-slate-300 hover:text-cyan-300 border border-slate-700/70 hover:border-cyan-500/40 transition-all cursor-pointer text-left"
+                className="text-[10px] px-2 py-0.5 rounded-md bg-slate-800/50 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-700/50 transition-all cursor-pointer flex-shrink-0 whitespace-nowrap"
               >
                 {suggestion}
               </button>
             ))}
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Input Form */}
       <div className="p-2.5 sm:p-3 bg-slate-900/90 border-t border-slate-800/80 relative z-10 flex-shrink-0">

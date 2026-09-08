@@ -13,6 +13,7 @@ interface ExportModalProps {
 export const ExportModal: React.FC<ExportModalProps> = ({ slides, isOpen, onClose }) => {
   const [isExporting, setIsExporting] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [statusMessage, setStatusMessage] = useState('Preparing PowerPoint...');
   const [downloadSuccess, setDownloadSuccess] = useState(false);
 
   if (!isOpen) return null;
@@ -20,8 +21,15 @@ export const ExportModal: React.FC<ExportModalProps> = ({ slides, isOpen, onClos
   const handleDownloadPPTX = async () => {
     try {
       setIsExporting(true);
-      setProgress(5);
-      await exportToPPTX(slides, p => setProgress(p));
+      setDownloadSuccess(false);
+      setProgress(0);
+      setStatusMessage('Preparing PowerPoint...');
+
+      await exportToPPTX(slides, ({ percent, message }) => {
+        setProgress(percent);
+        setStatusMessage(message);
+      });
+
       setDownloadSuccess(true);
       confetti({
         particleCount: 80,
@@ -73,28 +81,39 @@ export const ExportModal: React.FC<ExportModalProps> = ({ slides, isOpen, onClos
                   Microsoft PowerPoint Presentation (.pptx)
                 </h4>
                 <p className="text-xs text-slate-400 mt-1">
-                  Generates an actual 73-slide 16:9 presentation file styled with dark theme, formatted tables, code boxes, and memory tricks.
+                  Generates an authentic {slides.length}-slide pixel-perfect 16:9 widescreen PowerPoint (.pptx) file with all dark themes, code blocks, tables, and typography intact.
                 </p>
               </div>
             </div>
 
             {isExporting ? (
-              <div className="space-y-2 mt-2">
-                <div className="flex items-center justify-between text-xs font-mono text-cyan-400">
-                  <span>Generating PPTX Slides...</span>
-                  <span>{progress}%</span>
+              <div className="space-y-3 mt-2 p-3.5 rounded-xl bg-slate-950/80 border border-cyan-500/30">
+                <div className="flex items-center justify-between text-xs font-mono text-cyan-300">
+                  <span className="font-semibold flex items-center gap-2 truncate pr-2">
+                    <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping inline-block flex-shrink-0" />
+                    <span className="truncate">{statusMessage}</span>
+                  </span>
+                  <span className="font-bold font-mono text-cyan-400 flex-shrink-0">{progress}%</span>
                 </div>
-                <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                <div className="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden p-0.5 border border-slate-700">
                   <div
-                    className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 transition-all duration-200"
+                    className="h-full bg-gradient-to-r from-cyan-400 via-teal-400 to-blue-500 rounded-full transition-all duration-300 shadow-sm shadow-cyan-500/50"
                     style={{ width: `${progress}%` }}
                   />
                 </div>
+                <p className="text-[11px] text-slate-400 font-mono">
+                  Capturing pixel-perfect slides at 1920×1080. Please keep this tab open...
+                </p>
               </div>
             ) : downloadSuccess ? (
-              <div className="flex items-center gap-2 text-xs text-emerald-400 font-medium py-1">
-                <CheckCircle className="w-4 h-4 flex-shrink-0" />
-                PowerPoint file downloaded successfully! Check your downloads folder.
+              <div className="p-3 rounded-xl bg-emerald-950/30 border border-emerald-500/40 text-xs text-emerald-300 font-medium flex flex-col gap-1.5">
+                <div className="flex items-center gap-2 font-bold text-emerald-200">
+                  <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                  <span>PowerPoint ready</span>
+                </div>
+                <p className="text-[11px] text-slate-300">
+                  Downloaded <span className="text-cyan-300 font-mono">TCS_Ignite_Interview_Handbook.pptx</span> ({slides.length} slides). Check your downloads folder!
+                </p>
               </div>
             ) : (
               <button

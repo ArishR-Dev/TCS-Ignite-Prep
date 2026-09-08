@@ -37,13 +37,14 @@ export interface ResponsiveSlideScale {
  * readable font scales, padding, and spacing for the SlideViewer.
  * Prevents text from being cut off or requiring manual pinch-to-zoom on mobile screens.
  */
-export function useResponsiveSlideScale(): ResponsiveSlideScale {
+export function useResponsiveSlideScale(forceDesktop: boolean = false): ResponsiveSlideScale {
   const [dimensions, setDimensions] = useState({
     width: typeof window !== 'undefined' ? window.innerWidth : 1024,
     height: typeof window !== 'undefined' ? window.innerHeight : 768,
   });
 
   useEffect(() => {
+    if (forceDesktop) return;
     let timeoutId: number;
     const handleResize = () => {
       // Fast debounced update
@@ -64,17 +65,18 @@ export function useResponsiveSlideScale(): ResponsiveSlideScale {
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('orientationchange', handleResize);
     };
-  }, []);
+  }, [forceDesktop]);
 
-  const { width, height } = dimensions;
-  const isTinyMobile = width < 360;
-  const isMobile = width < 640;
-  const isTablet = width >= 640 && width < 1024;
-  const isDesktop = width >= 1024;
+  const width = forceDesktop ? 1920 : dimensions.width;
+  const height = forceDesktop ? 1080 : dimensions.height;
+  const isTinyMobile = forceDesktop ? false : width < 360;
+  const isMobile = forceDesktop ? false : width < 640;
+  const isTablet = forceDesktop ? false : (width >= 640 && width < 1024);
+  const isDesktop = forceDesktop ? true : width >= 1024;
 
   // Normalized scale factor clamped safely to avoid illegibility or bloated sizes
   const rawRatio = width / 768;
-  const scaleFactor = Math.min(Math.max(rawRatio, 0.85), 1.2);
+  const scaleFactor = forceDesktop ? 1.0 : Math.min(Math.max(rawRatio, 0.85), 1.2);
 
   // Dynamic typography classes optimized for readability without manual zoom
   const typography = {

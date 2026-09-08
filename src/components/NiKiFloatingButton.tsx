@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Sparkles, Bot, MessageSquare } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
+import { EunchaeLogo } from './EunchaeLogo';
 
 interface NiKiFloatingButtonProps {
   onClick: () => void;
@@ -59,7 +60,7 @@ export const NiKiFloatingButton: React.FC<NiKiFloatingButtonProps> = ({
           setShowTooltip(false);
           onClick();
         }}
-        className="group relative flex items-center gap-2 px-3.5 py-2.5 sm:px-4 sm:py-3 rounded-full bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-600 text-white font-semibold text-xs sm:text-sm shadow-xl shadow-cyan-950/80 hover:shadow-cyan-500/30 hover:scale-105 active:scale-95 transition-all cursor-pointer border border-cyan-400/40"
+        className="group relative flex items-center gap-2 px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-full bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-600 text-white font-semibold text-xs sm:text-sm shadow-xl shadow-cyan-950/80 hover:shadow-cyan-500/30 hover:scale-105 active:scale-95 transition-all cursor-pointer border border-cyan-400/40"
         title="Open Eunchae - Your Interview Prep Companion"
         aria-label="Open Eunchae AI Assistant"
       >
@@ -67,9 +68,7 @@ export const NiKiFloatingButton: React.FC<NiKiFloatingButtonProps> = ({
         <span className="absolute -inset-0.5 rounded-full bg-cyan-400/30 blur-sm group-hover:bg-cyan-400/50 animate-pulse" />
 
         <div className="relative flex items-center justify-center">
-          <div className="w-5 h-5 sm:w-5.5 sm:h-5.5 rounded-full bg-white/20 flex items-center justify-center">
-            <Sparkles className="w-3.5 h-3.5 text-cyan-200" />
-          </div>
+          <EunchaeLogo size={24} showSparkle={false} glow={false} />
           <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 border border-slate-950" />
         </div>
 
@@ -85,3 +84,4 @@ export const NiKiFloatingButton: React.FC<NiKiFloatingButtonProps> = ({
     </div>
   );
 };
+

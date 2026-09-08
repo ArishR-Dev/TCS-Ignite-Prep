@@ -66,3 +66,31 @@ export interface Slide {
   content: SlideContent;
   tags?: string[];
 }
+
+export type EunchaeSourceType = 'current_website' | 'study_material' | 'web_research';
+
+export interface GroundingSource {
+  title: string;
+  url?: string;
+  snippet?: string;
+}
+
+export interface DynamicWebsiteContext {
+  currentPage: string;
+  currentSlideId: string;
+  currentSlideTitle: string;
+  currentSection: string;
+  currentSlideContent: string;
+  visibleText: string;
+  nearbySlideContent: string;
+}
+
+export interface KnowledgeChunk {
+  id: string;
+  slideId: string;
+  title: string;
+  section: string;
+  content: string;
+  keywords: string[];
+  topic: string;
+}

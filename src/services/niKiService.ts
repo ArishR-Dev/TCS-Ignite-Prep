@@ -1,12 +1,15 @@
-import { Slide } from '../types';
+import { Slide, EunchaeSourceType, GroundingSource, DynamicWebsiteContext, KnowledgeChunk } from '../types';
 import {
   searchKnowledge,
   retrieveContext,
   buildCurrentSlideContext,
+  buildDynamicWebsiteContext,
+  convertToKnowledgeChunks,
+  analyzeQuestionRouting,
+  RoutingAnalysis,
   getCachedAnswer,
   setCachedAnswer,
   computeCacheKey,
-  SearchPerformanceMeta,
   initializeContentIndex
 } from '../utils/eunchaeEngine';
 import { synthesizeLocalResponse } from '../utils/nikiKnowledge';
@@ -18,6 +21,9 @@ export interface ChatMessage {
   timestamp: number;
   slideRef?: number;
   mode?: 'chat' | 'interview' | 'quiz';
+  source?: EunchaeSourceType;
+  webSources?: GroundingSource[];
+  routingCase?: string;
   options?: string[];
   answeredOptionIndex?: number;
   debugMeta?: {
@@ -27,7 +33,10 @@ export interface ChatMessage {
     aiResponseTimeMs?: number;
     totalTimeMs: number;
     cacheHit: boolean;
-    source: 'gemini' | 'local_knowledge' | 'cache';
+    source: EunchaeSourceType | 'cache';
+    routingCase?: string;
+    needsWebSearch?: boolean;
+    memoryCount?: number;
   };
 }
 
@@ -35,14 +44,18 @@ export interface AskNiKiParams {
   message: string;
   history: ChatMessage[];
   currentSlide?: Slide | null;
+  allSlides?: Slide[];
+  currentSlideIndex?: number;
   mode?: 'chat' | 'interview' | 'quiz';
-  onSearchStatusChange?: (status: 'idle' | 'searching' | 'generating') => void;
+  onSearchStatusChange?: (status: 'idle' | 'searching' | 'web_research' | 'generating') => void;
 }
 
 export interface NiKiResponse {
   reply: string;
   mode: 'chat' | 'interview' | 'quiz';
-  source: 'gemini' | 'local_knowledge' | 'cache';
+  source: EunchaeSourceType;
+  webSources?: GroundingSource[];
+  routingCase?: string;
   options?: string[];
   meta?: {
     searchTimeMs: number;
@@ -51,6 +64,10 @@ export interface NiKiResponse {
     aiResponseTimeMs?: number;
     totalTimeMs: number;
     cacheHit: boolean;
+    source: EunchaeSourceType | 'cache';
+    routingCase?: string;
+    needsWebSearch?: boolean;
+    memoryCount?: number;
   };
 }
 
@@ -64,50 +81,70 @@ export class NiKiService {
 
   /**
    * Primary entry point to ask Eunchae a question
+   * Executes the strict priority routing:
+   * Current Website Content -> Website Knowledge Base -> Web Search
    */
   static async askNiKi({
     message,
     history,
     currentSlide,
+    allSlides,
+    currentSlideIndex,
     mode = 'chat',
     onSearchStatusChange
   }: AskNiKiParams): Promise<NiKiResponse> {
     const overallStartTime = performance.now();
     const cacheKey = computeCacheKey(message, currentSlide?.id, mode);
 
-    // 1. Check Fast Session LRU Cache
+    // 1. Dynamic Website Context Builder
+    const dynamicContext = buildDynamicWebsiteContext(currentSlide, allSlides, currentSlideIndex);
+
+    // 2. Hybrid RAG Retrieval (exact, phrase, fuzzy keywords, current-slide relevance)
+    onSearchStatusChange?.('searching');
+    const { hits, meta: searchMeta } = searchKnowledge(message, currentSlide, 4);
+    const retrievedChunks = convertToKnowledgeChunks(hits);
+    const retrievedContext = retrieveContext(hits);
+
+    // 3. Question Analyzer and Smart Routing
+    const routing = analyzeQuestionRouting(message, currentSlide, hits, history.length);
+
+    if (routing.needsWebSearch) {
+      onSearchStatusChange?.('web_research');
+    } else {
+      onSearchStatusChange?.('generating');
+    }
+
+    // 4. Check Fast Session LRU Cache for exact repeated queries
     const cachedReply = getCachedAnswer(cacheKey);
     if (cachedReply) {
       const elapsed = Number((performance.now() - overallStartTime).toFixed(1));
       return {
         reply: cachedReply,
         mode,
-        source: 'cache',
+        source: routing.primarySource,
+        routingCase: routing.routingCase,
         meta: {
           searchTimeMs: 0.1,
           hitsCount: 1,
           currentSlide: currentSlide?.slideTitle,
           aiResponseTimeMs: 0,
           totalTimeMs: elapsed,
-          cacheHit: true
+          cacheHit: true,
+          source: 'cache',
+          routingCase: routing.routingCase,
+          needsWebSearch: routing.needsWebSearch,
+          memoryCount: history.length
         }
       };
     }
 
-    // 2. Fast multi-stage search engine
-    onSearchStatusChange?.('searching');
-    const { hits, meta: searchMeta } = searchKnowledge(message, currentSlide, 4);
-    const retrievedContext = retrieveContext(hits);
-    const currentSlideContext = buildCurrentSlideContext(currentSlide);
-
-    onSearchStatusChange?.('generating');
-
-    // Format recent sliding conversation window (last 12 turns)
-    const formattedHistory = history.slice(-12).map(m => ({
+    // 5. Build memory sliding window (last 14 messages)
+    const formattedHistory = history.slice(-14).map(m => ({
       role: m.role === 'user' ? 'user' : 'model',
       text: m.text
     }));
 
+    // 6. Dispatch to server-side Gemini & Web Research endpoint
     try {
       const response = await fetch('/api/niki/chat', {
         method: 'POST',
@@ -117,10 +154,10 @@ export class NiKiService {
         body: JSON.stringify({
           message,
           history: formattedHistory,
-          currentSlideContext,
-          currentSlideTitle: currentSlide?.slideTitle,
-          currentSlideNumber: currentSlide?.slideNumber,
+          dynamicContext,
+          retrievedChunks,
           retrievedContext,
+          routingDecision: routing,
           mode
         })
       });
@@ -130,29 +167,36 @@ export class NiKiService {
         if (data.reply && !data.fallback) {
           const totalTimeMs = Number((performance.now() - overallStartTime).toFixed(1));
 
-          // Save to session cache
           setCachedAnswer(cacheKey, data.reply);
+
+          const finalSource: EunchaeSourceType = data.source || routing.primarySource;
 
           return {
             reply: data.reply,
             mode: data.mode || mode,
-            source: 'gemini',
+            source: finalSource,
+            webSources: data.webSources,
+            routingCase: data.routingCase || routing.routingCase,
             meta: {
               searchTimeMs: searchMeta.searchTimeMs,
               hitsCount: searchMeta.hitsCount,
               currentSlide: currentSlide?.slideTitle,
               aiResponseTimeMs: data.aiResponseTimeMs || 0,
               totalTimeMs,
-              cacheHit: false
+              cacheHit: false,
+              source: finalSource,
+              routingCase: data.routingCase || routing.routingCase,
+              needsWebSearch: routing.needsWebSearch,
+              memoryCount: history.length
             }
           };
         }
       }
     } catch (err) {
-      console.log('[Eunchae Engine] Backend request failed, utilizing local knowledge engine:', err);
+      console.log('[Eunchae Engine] Server request failed, engaging local handbook engine:', err);
     }
 
-    // 3. High-precision local fallback engine (ensures 100% reliability)
+    // 7. High-precision local fallback engine ensuring 100% uptime
     const localReply = synthesizeLocalResponse(message, currentSlide, mode);
     const totalTimeMs = Number((performance.now() - overallStartTime).toFixed(1));
 
@@ -161,14 +205,19 @@ export class NiKiService {
     return {
       reply: localReply,
       mode,
-      source: 'local_knowledge',
+      source: routing.primarySource,
+      routingCase: routing.routingCase,
       meta: {
         searchTimeMs: searchMeta.searchTimeMs,
         hitsCount: searchMeta.hitsCount,
         currentSlide: currentSlide?.slideTitle,
         aiResponseTimeMs: 0,
         totalTimeMs,
-        cacheHit: false
+        cacheHit: false,
+        source: routing.primarySource,
+        routingCase: routing.routingCase,
+        needsWebSearch: routing.needsWebSearch,
+        memoryCount: history.length
       }
     };
   }

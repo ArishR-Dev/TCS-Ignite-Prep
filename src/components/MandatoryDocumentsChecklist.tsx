@@ -18,17 +18,20 @@ interface MandatoryDocumentsChecklistProps {
   onComplete: () => void;
   onAttemptIncomplete?: () => void;
   isMobile?: boolean;
+  isExportMode?: boolean;
 }
 
 export const MandatoryDocumentsChecklist: React.FC<MandatoryDocumentsChecklistProps> = ({
   onComplete,
   onAttemptIncomplete,
-  isMobile = false
+  isMobile = false,
+  isExportMode = false
 }) => {
-  const [checkedIndices, setCheckedIndices] = useState<number[]>([]);
-  const [showWarning, setShowWarning] = useState<boolean>(false);
-
   const totalItems = MANDATORY_CHECKLIST_ITEMS.length;
+  const [checkedIndices, setCheckedIndices] = useState<number[]>(() =>
+    isExportMode ? [0, 1, 2, 3, 4, 5, 6] : []
+  );
+  const [showWarning, setShowWarning] = useState<boolean>(false);
   const isAllChecked = checkedIndices.length === totalItems;
   const progressPercent = Math.round((checkedIndices.length / totalItems) * 100);
 
@@ -215,29 +218,31 @@ export const MandatoryDocumentsChecklist: React.FC<MandatoryDocumentsChecklistPr
         </div>
 
         {/* Next Slide / Continue Action Button */}
-        <button
-          id="documents-checklist-continue-btn"
-          type="button"
-          onClick={handleContinue}
-          className={`px-6 py-3 rounded-xl font-['Plus_Jakarta_Sans'] text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all duration-300 min-h-[46px] cursor-pointer shadow-lg active:scale-[0.98] ${
-            isAllChecked
-              ? 'bg-gradient-to-r from-cyan-400 via-teal-400 to-cyan-400 text-slate-950 shadow-cyan-500/40 hover:brightness-110 hover:shadow-cyan-400/50'
-              : 'bg-slate-800/90 text-slate-400 border border-slate-700/80 hover:border-slate-600 hover:text-slate-300 shadow-slate-950/50'
-          }`}
-          title={isAllChecked ? 'Continue to Slide 3' : 'Please check all 7 items to continue'}
-        >
-          {isAllChecked ? (
-            <>
-              <span>Everything Ready →</span>
-              <Sparkles className="w-4 h-4 text-slate-950" />
-            </>
-          ) : (
-            <>
-              <Lock className="w-3.5 h-3.5 text-slate-500" />
-              <span>Continue ({checkedIndices.length}/7 Verified)</span>
-            </>
-          )}
-        </button>
+        {!isExportMode && (
+          <button
+            id="documents-checklist-continue-btn"
+            type="button"
+            onClick={handleContinue}
+            className={`px-6 py-3 rounded-xl font-['Plus_Jakarta_Sans'] text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all duration-300 min-h-[46px] cursor-pointer shadow-lg active:scale-[0.98] ${
+              isAllChecked
+                ? 'bg-gradient-to-r from-cyan-400 via-teal-400 to-cyan-400 text-slate-950 shadow-cyan-500/40 hover:brightness-110 hover:shadow-cyan-400/50'
+                : 'bg-slate-800/90 text-slate-400 border border-slate-700/80 hover:border-slate-600 hover:text-slate-300 shadow-slate-950/50'
+            }`}
+            title={isAllChecked ? 'Continue to Slide 3' : 'Please check all 7 items to continue'}
+          >
+            {isAllChecked ? (
+              <>
+                <span>Everything Ready →</span>
+                <Sparkles className="w-4 h-4 text-slate-950" />
+              </>
+            ) : (
+              <>
+                <Lock className="w-3.5 h-3.5 text-slate-500" />
+                <span>Continue ({checkedIndices.length}/7 Verified)</span>
+              </>
+            )}
+          </button>
+        )}
       </div>
     </div>
   );

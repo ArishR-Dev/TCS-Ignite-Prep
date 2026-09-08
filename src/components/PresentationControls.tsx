@@ -396,20 +396,22 @@ export const PresentationControls: React.FC<PresentationControlsProps> = ({
               )}
             </button>
 
-            {/* Bookmark Current Slide Toggle */}
+            {/* Bookmark / Save Current Slide Toggle */}
             {onToggleBookmark && (
               <button
+                type="button"
                 onClick={() => onToggleBookmark(currentSlide.id)}
-                className={`p-2 sm:p-1.5 rounded-lg border text-xs transition-colors flex items-center justify-center min-h-[38px] min-w-[38px] sm:min-h-auto sm:min-w-auto ${
+                className={`p-2 sm:p-1.5 rounded-lg border text-xs transition-colors flex items-center justify-center min-h-[38px] min-w-[38px] sm:min-h-auto sm:min-w-auto cursor-pointer ${
                   isCurrentBookmarked
-                    ? 'bg-amber-500/20 border-amber-400 text-amber-300'
+                    ? 'bg-amber-500/20 border-amber-400 text-amber-300 shadow-xs'
                     : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-slate-200'
                 }`}
                 title={
                   isCurrentBookmarked
-                    ? 'Bookmarked (Click to unpin or press B)'
-                    : 'Pin to My Bookmarks (Press B)'
+                    ? 'Saved to Bookmarks (Click to unsave or press B)'
+                    : 'Save to Bookmarks (Press B)'
                 }
+                aria-label={isCurrentBookmarked ? 'Saved to Bookmarks' : 'Save to Bookmarks'}
               >
                 <Bookmark className={`w-3.5 h-3.5 ${isCurrentBookmarked ? 'fill-amber-400 text-amber-400' : ''}`} />
               </button>

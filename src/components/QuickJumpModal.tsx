@@ -87,13 +87,14 @@ export const QuickJumpModal: React.FC<QuickJumpModalProps> = ({
   // Quick milestone markers
   const milestones = [
     { num: 1, label: 'Cover', icon: '🎯' },
-    { num: 2, label: 'Agenda & Rounds', icon: '📋' },
-    { num: 7, label: 'OOP & Python', icon: '🐍' },
-    { num: 27, label: 'Basic SQL', icon: '🗄️' },
-    { num: 44, label: 'SQL JOINs', icon: '🔗' },
-    { num: 55, label: 'Commands & DDL', icon: '⚡' },
-    { num: 67, label: 'Coding & DSA', icon: '💻' },
-    { num: 72, label: 'HR Round', icon: '💼' },
+    { num: 2, label: 'Docs Checklist', icon: '📋' },
+    { num: 3, label: 'Agenda & Rounds', icon: '📅' },
+    { num: 8, label: 'OOP & Python', icon: '🐍' },
+    { num: 23, label: 'Basic SQL', icon: '🗄️' },
+    { num: 30, label: 'SQL JOINs', icon: '🔗' },
+    { num: 43, label: 'Commands & DDL', icon: '⚡' },
+    { num: 48, label: 'Coding & DSA', icon: '💻' },
+    { num: 68, label: 'HR Round', icon: '💼' },
     { num: 73, label: 'Final Wish', icon: '✨' },
   ];
 

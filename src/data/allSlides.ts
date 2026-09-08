@@ -82,33 +82,18 @@ export const SECTIONS: SectionMeta[] = [
   }
 ];
 
-// Standard interview slides without the mandatory checklist (73 slides)
-const standardRawSlides: Slide[] = [
-  ...slidesCover,
-  ...slidesAgenda,
-  ...slidesOOP,
-  ...slidesBasicSQL,
-  ...slidesJoins,
-  ...slidesCommands,
-  ...slidesCoding,
-  ...slidesHR
-];
-
-// Full master presentation slides including Slide #2 Mandatory Documents Checklist (74 slides)
-const masterRawSlidesWithChecklist: Slide[] = [
-  slidesCover[0], // Slide 1: Cover
+// Canonical 73 slides with Mandatory Documents Checklist as Slide 2
+export const allSlides: Slide[] = [
+  ...slidesCover, // Slide 1: Cover
   mandatoryDocumentsSlide, // Slide 2: Mandatory Checklist
-  ...slidesCover.slice(1), // Slide 3: Preparation Roadmap & Table of Contents
-  ...slidesAgenda,
-  ...slidesOOP,
-  ...slidesBasicSQL,
-  ...slidesJoins,
-  ...slidesCommands,
-  ...slidesCoding,
-  ...slidesHR
-];
-
-export const allSlides: Slide[] = standardRawSlides.map((slide, index) => ({
+  ...slidesAgenda, // Slides 3 to 7
+  ...slidesOOP, // Slides 8 to 22
+  ...slidesBasicSQL, // Slides 23 to 29
+  ...slidesJoins, // Slides 30 to 42
+  ...slidesCommands, // Slides 43 to 47
+  ...slidesCoding, // Slides 48 to 67
+  ...slidesHR // Slides 68 to 73
+].map((slide, index) => ({
   ...slide,
   slideNumber: index + 1
 }));
@@ -117,9 +102,9 @@ export const allSlidesWithoutChecklist: Slide[] = allSlides;
 export const allSlidesWithChecklist: Slide[] = allSlides;
 
 /**
- * Returns the standard 73 interview presentation slides.
+ * Returns the canonical 73 presentation slides.
  */
-export const getAllSlides = (_isCompleted?: boolean): Slide[] => {
+export const getAllSlides = (_isCompleted: boolean = true): Slide[] => {
   return allSlides;
 };
 

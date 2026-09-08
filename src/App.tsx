@@ -15,7 +15,9 @@ import { AlertCircle } from 'lucide-react';
 export default function App() {
   const [isDocsCompleted, setIsDocsCompleted] = useState<boolean>(() => {
     try {
-      return localStorage.getItem('tcs_documents_slide_completed') === 'true';
+      const v1 = localStorage.getItem('tcs_documents_slide_completed');
+      const v2 = localStorage.getItem('tcs_ignite_gatekeeper_completed');
+      return v1 === 'true' || v2 === 'true';
     } catch {
       return false;
     }
@@ -33,7 +35,18 @@ export default function App() {
     if (hash && hash.startsWith('#slide-')) {
       const parsed = parseInt(hash.replace('#slide-', ''), 10);
       if (!isNaN(parsed) && parsed >= 1) {
-        return Math.min(Math.max(0, parsed - 1), 72);
+        const targetIdx = Math.min(Math.max(0, parsed - 1), 72);
+        try {
+          const completed =
+            localStorage.getItem('tcs_documents_slide_completed') === 'true' ||
+            localStorage.getItem('tcs_ignite_gatekeeper_completed') === 'true';
+          if (!completed && targetIdx > 1) {
+            return 1;
+          }
+        } catch {
+          // ignore
+        }
+        return targetIdx;
       }
     }
     return 0;
@@ -169,6 +182,10 @@ export default function App() {
   }, [isGridOpen, isSearchOpen, isQuickJumpOpen, isExportOpen, isModelSelectorOpen, isNiKiOpen]);
 
   const handleNext = () => {
+    if (!isDocsCompleted && currentSlideIndex >= 1) {
+      triggerBlockedMessage();
+      return;
+    }
     setCurrentSlideIndex(prev => Math.min(slides.length - 1, prev + 1));
   };
 
@@ -177,6 +194,10 @@ export default function App() {
   };
 
   const handleSelectSlide = (index: number) => {
+    if (!isDocsCompleted && index > 1) {
+      triggerBlockedMessage();
+      return;
+    }
     if (index >= 0 && index < slides.length) {
       setCurrentSlideIndex(index);
     }
@@ -185,12 +206,13 @@ export default function App() {
   const handleCompleteDocuments = () => {
     try {
       localStorage.setItem('tcs_documents_slide_completed', 'true');
+      localStorage.setItem('tcs_ignite_gatekeeper_completed', 'true');
     } catch (e) {
       console.error(e);
     }
     setIsDocsCompleted(true);
-    // In the filtered 73-slide list, index 1 is Preparation Roadmap & Table of Contents
-    setCurrentSlideIndex(1);
+    // Upon verifying all documents on Slide 2, smoothly advance to Slide 3 (Agenda Divider)
+    setCurrentSlideIndex(2);
     setBlockedToastMessage(null);
   };
 

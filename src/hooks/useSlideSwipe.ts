@@ -36,9 +36,9 @@ export function useSlideSwipe({
   onPrev,
   canSwipePrev = true,
   canSwipeNext = true,
-  threshold = 40,
-  velocityThreshold = 20,
-  maxDragOffset = 75,
+  threshold = 44,
+  velocityThreshold = 22,
+  maxDragOffset = 70,
 }: UseSlideSwipeOptions): UseSlideSwipeReturn {
   const [dragOffset, setDragOffset] = useState<number>(0);
   const [isSwiping, setIsSwiping] = useState<boolean>(false);
@@ -52,8 +52,8 @@ export function useSlideSwipe({
 
   const handleStart = useCallback((clientX: number, clientY: number, target: EventTarget | null) => {
     const el = target as HTMLElement | null;
-    // Check if user touched an internal horizontally scrollable block (pre, table, scroll strip)
-    isInsideScrollable.current = Boolean(el?.closest('pre, table, .touch-pan-x, input, select'));
+    // Check if user touched an internal horizontally scrollable block or interactive element
+    isInsideScrollable.current = Boolean(el?.closest('pre, table, .touch-pan-x, input, select, textarea, button, a, [role="button"]'));
     startX.current = clientX;
     startY.current = clientY;
     startTime.current = Date.now();
@@ -67,10 +67,18 @@ export function useSlideSwipe({
     const diffX = clientX - startX.current;
     const diffY = clientY - startY.current;
 
-    // Must be predominantly horizontal gesture
-    if (Math.abs(diffX) > Math.abs(diffY) * 1.25 && Math.abs(diffX) > 8) {
+    // Detect vertical page scrolling immediately: cancel swipe tracking so native vertical scroll proceeds unhindered
+    if (Math.abs(diffY) > 8 && Math.abs(diffY) >= Math.abs(diffX) * 0.9) {
+      isTracking.current = false;
+      setIsSwiping(false);
+      setDragOffset(0);
+      return;
+    }
+
+    // Only engage horizontal slide swipe if gesture is strictly horizontal and not vertical
+    if (Math.abs(diffX) > Math.abs(diffY) * 1.5 && Math.abs(diffX) > 12 && Math.abs(diffY) < 35) {
       // If inside horizontally scrollable element and gentle drag, let user scroll code/table
-      if (isInsideScrollable.current && Math.abs(diffX) < 45) {
+      if (isInsideScrollable.current && Math.abs(diffX) < 55) {
         return;
       }
 
@@ -79,7 +87,7 @@ export function useSlideSwipe({
       // Boundary resistance damping
       const isDraggingPastPrev = diffX > 0 && !canSwipePrev;
       const isDraggingPastNext = diffX < 0 && !canSwipeNext;
-      const damping = isDraggingPastPrev || isDraggingPastNext ? 0.12 : 0.38;
+      const damping = isDraggingPastPrev || isDraggingPastNext ? 0.1 : 0.35;
 
       const clamped = Math.max(Math.min(diffX * damping, maxDragOffset), -maxDragOffset);
       setDragOffset(clamped);
@@ -97,7 +105,7 @@ export function useSlideSwipe({
     const diffY = clientY - startY.current;
     const duration = Date.now() - startTime.current;
 
-    const isHorizontalSwipe = Math.abs(diffX) > Math.abs(diffY) * 1.2;
+    const isHorizontalSwipe = Math.abs(diffX) > Math.abs(diffY) * 1.4 && Math.abs(diffY) < 45;
     // Decisive swipe: either distance exceeds threshold, or fast flick (< 280ms) exceeds velocity threshold
     const isDecisive = Math.abs(diffX) >= threshold || (Math.abs(diffX) >= velocityThreshold && duration < 280);
 

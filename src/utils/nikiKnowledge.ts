@@ -1,5 +1,5 @@
 import { Slide } from '../types';
-import { allSlidesWithChecklist, SECTIONS } from '../data/allSlides';
+import { allSlides, SECTIONS } from '../data/allSlides';
 import { searchKnowledge, SearchHit } from './eunchaeEngine';
 
 export interface SearchResult {

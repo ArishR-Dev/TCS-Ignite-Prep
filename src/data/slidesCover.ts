@@ -7,14 +7,14 @@ export const slidesCover: Slide[] = [
     sectionId: 'agenda',
     sectionTitle: 'COVER',
     slideTitle: 'TCS B.Sc IGNITE',
-    slideSubtitle: 'INTERVIEW PREPARATION',
+    slideSubtitle: 'INTERVIEW PREPARATION HANDBOOK',
     isDivider: true,
     content: {
       paragraphs: [
-        'Technical • SQL • OOP • Coding • DSA • HR',
+        'Technical • SQL • OOP • Coding • DSA • HR Interview Mastery',
         'Comprehensive Personal Interview-Preparation Handbook',
-        'Prepared for: SUBASHINI',
-        'Student Name: ARISH',
+        'Candidate: SUBASHINI',
+        'Date: 09th September 2026, Wednesday',
         'Venue Focus: Tower B, TCS Yeshwanthpur'
       ],
       keyNotes: [
@@ -22,7 +22,7 @@ export const slidesCover: Slide[] = [
         'Complete with Python algorithms, SQL queries, outputs, memory tricks, and HR verbal responses'
       ]
     },
-    tags: ['cover', 'tcs ignite', 'subashini', 'arish', 'handbook']
+    tags: ['cover', 'tcs ignite', 'subashini', 'handbook', 'yeshwanthpur']
   },
   {
     id: 'contents-roadmap',

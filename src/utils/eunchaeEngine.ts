@@ -1,5 +1,5 @@
 import { Slide, DynamicWebsiteContext, KnowledgeChunk, EunchaeSourceType } from '../types';
-import { allSlidesWithChecklist } from '../data/allSlides';
+import { allSlides } from '../data/allSlides';
 
 /**
  * Normalized content index entry for high-speed retrieval
@@ -212,7 +212,7 @@ function compileSlideToEntry(slide: Slide): ContentIndexEntry {
  * Initialize and pre-cache the website content index on app load.
  * This runs once, memoizes in memory, and prevents redundant scanning.
  */
-export function initializeContentIndex(slidesSource: Slide[] = allSlidesWithChecklist): ContentIndexEntry[] {
+export function initializeContentIndex(slidesSource: Slide[] = allSlides): ContentIndexEntry[] {
   if (cachedContentIndex && cachedContentIndex.length === slidesSource.length) {
     return cachedContentIndex;
   }
@@ -301,7 +301,7 @@ export function searchKnowledge(
   const scoredHits: SearchHit[] = [];
 
   for (const entry of index) {
-    const slide = slideMapById.get(entry.slideId) || allSlidesWithChecklist.find(s => s.id === entry.slideId);
+    const slide = slideMapById.get(entry.slideId) || allSlides.find(s => s.id === entry.slideId);
     if (!slide) continue;
 
     let score = 0;
@@ -503,7 +503,7 @@ export function computeCacheKey(message: string, currentSlideId?: string, mode?:
  */
 export function buildDynamicWebsiteContext(
   currentSlide: Slide | null | undefined,
-  allSlides: Slide[] = allSlidesWithChecklist,
+  allSlidesSource: Slide[] = allSlides,
   currentSlideIndex?: number
 ): DynamicWebsiteContext {
   if (!currentSlide) {
@@ -520,9 +520,9 @@ export function buildDynamicWebsiteContext(
 
   const resolvedIndex = currentSlideIndex !== undefined && currentSlideIndex >= 0
     ? currentSlideIndex
-    : allSlides.findIndex(s => s.id === currentSlide.id);
+    : allSlidesSource.findIndex(s => s.id === currentSlide.id);
 
-  const total = allSlides.length;
+  const total = allSlidesSource.length;
   const pageNumber = resolvedIndex >= 0 ? resolvedIndex + 1 : currentSlide.slideNumber;
   const currentPage = `Slide ${pageNumber} of ${total} (${currentSlide.sectionTitle})`;
 
@@ -544,11 +544,11 @@ export function buildDynamicWebsiteContext(
   // Nearby slide context (spatial continuity: 1 slide before, 1 slide after)
   const nearbyParts: string[] = [];
   if (resolvedIndex > 0) {
-    const prev = allSlides[resolvedIndex - 1];
+    const prev = allSlidesSource[resolvedIndex - 1];
     nearbyParts.push(`[Previous Slide #${prev.slideNumber}: "${prev.slideTitle}" (${prev.sectionTitle}) - Tags: ${(prev.tags || []).slice(0, 3).join(', ')}]`);
   }
   if (resolvedIndex >= 0 && resolvedIndex < total - 1) {
-    const next = allSlides[resolvedIndex + 1];
+    const next = allSlidesSource[resolvedIndex + 1];
     nearbyParts.push(`[Next Slide #${next.slideNumber}: "${next.slideTitle}" (${next.sectionTitle}) - Tags: ${(next.tags || []).slice(0, 3).join(', ')}]`);
   }
 

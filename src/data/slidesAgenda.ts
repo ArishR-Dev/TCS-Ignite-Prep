@@ -14,7 +14,7 @@ export const slidesAgenda: Slide[] = [
         'Complete overview of the arrival, document check, technical interview, managerial review, HR round, and final steps for the TCS B.Sc Ignite drive at Tower B, TCS Yeshwanthpur.'
       ],
       keyNotes: [
-        'Venue: Tower B, TCS Yeshwanthpur (Reporting: 08:45 AM)',
+        'Venue: Tower B, TCS Yeshwanthpur (Official Reporting: 09:00 AM | Recommended Arrival: 08:45 AM)',
         'Key dynamic: In many cases TR, MR and HR are merged into one conversation'
       ]
     },

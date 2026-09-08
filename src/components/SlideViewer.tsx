@@ -3,6 +3,7 @@ import { Slide } from '../types';
 import { useResponsiveSlideScale } from '../hooks/useResponsiveSlideScale';
 import { useSlideSwipe } from '../hooks/useSlideSwipe';
 import { MandatoryDocumentsChecklist } from './MandatoryDocumentsChecklist';
+import { CoverReportingDetails } from './CoverReportingDetails';
 import {
   Copy,
   Check,
@@ -81,7 +82,7 @@ export const SlideViewer: React.FC<SlideViewerProps> = ({
       className={
         isExportMode
           ? 'w-[1920px] h-[1080px] p-12 flex flex-col justify-between bg-gradient-to-b from-[#0f172a] to-[#0b0f19] relative overflow-hidden select-text border border-slate-800/80 rounded-none shadow-none'
-          : `w-full max-w-6xl mx-auto flex flex-col justify-between min-h-[auto] sm:min-h-[640px] bg-gradient-to-b from-[#0f172a] to-[#0b0f19] border border-slate-800/80 rounded-xl sm:rounded-2xl ${spacing.containerPadding} shadow-2xl shadow-cyan-950/20 relative overflow-hidden transition-all duration-300 select-text touch-pan-y`
+          : `w-full max-w-6xl mx-auto flex flex-col justify-between min-h-[auto] sm:min-h-[640px] bg-gradient-to-b from-[#0f172a] to-[#0b0f19] border border-slate-800/80 rounded-xl sm:rounded-2xl ${spacing.containerPadding} shadow-2xl shadow-cyan-950/20 relative transition-all duration-300 select-text touch-pan-y`
       }
     >
       {/* Subtle background ambient tech glow */}
@@ -186,20 +187,7 @@ export const SlideViewer: React.FC<SlideViewerProps> = ({
           )}
 
           {slide.id === 'cover' && (
-            <div className="mt-3.5 sm:mt-8 pt-2.5 sm:pt-6 border-t border-slate-800 grid grid-cols-2 sm:flex sm:flex-wrap items-center justify-between gap-2.5 sm:gap-4">
-              <div>
-                <span className="text-[9px] sm:text-xs uppercase tracking-wider text-slate-400 block">Candidate</span>
-                <p className={`${isMobile ? 'text-sm' : 'text-xl'} font-bold text-white`}>SUBASHINI</p>
-              </div>
-              <div>
-                <span className="text-[9px] sm:text-xs uppercase tracking-wider text-slate-400 block">Prep Lead</span>
-                <p className={`${isMobile ? 'text-sm' : 'text-lg'} font-semibold text-cyan-400`}>ARISH</p>
-              </div>
-              <div className="col-span-2 sm:col-span-1 sm:text-right">
-                <span className="text-[9px] sm:text-xs uppercase tracking-wider text-slate-400 block">Drive Target</span>
-                <p className="text-[10px] sm:text-sm font-mono text-slate-300">TCS B.Sc Ignite • Yeshwanthpur</p>
-              </div>
-            </div>
+            <CoverReportingDetails isMobile={isMobile} />
           )}
         </div>
       ) : (

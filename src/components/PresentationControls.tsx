@@ -148,7 +148,7 @@ export const PresentationControls: React.FC<PresentationControlsProps> = ({
                 </span>
               </div>
               <p className="text-[11px] text-slate-400 font-mono">
-                Prepared for <span className="text-cyan-400 font-semibold">SUBASHINI</span> • by ARISH
+                Prepared for <span className="text-cyan-400 font-semibold">SUBASHINI</span> • TCS B.Sc Ignite
               </p>
             </div>
           </div>

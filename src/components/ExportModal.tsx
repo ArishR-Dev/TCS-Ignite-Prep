@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Slide } from '../types';
 import { exportToPPTX } from '../utils/pptxExport';
 import { Download, Printer, CheckCircle, FileText, AlertCircle, Sparkles, X } from 'lucide-react';
@@ -15,6 +15,16 @@ export const ExportModal: React.FC<ExportModalProps> = ({ slides, isOpen, onClos
   const [progress, setProgress] = useState(0);
   const [statusMessage, setStatusMessage] = useState('Preparing PowerPoint...');
   const [downloadSuccess, setDownloadSuccess] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -49,8 +59,14 @@ export const ExportModal: React.FC<ExportModalProps> = ({ slides, isOpen, onClos
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)]">
-      <div className="w-full max-w-lg bg-[#0e1424] border border-slate-700 rounded-2xl p-4 sm:p-6 shadow-2xl relative my-auto max-h-[92vh] overflow-y-auto">
+    <div
+      className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)]"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-lg bg-[#0e1424] border border-slate-700 rounded-2xl p-4 sm:p-6 shadow-2xl relative my-auto max-h-[92vh] overflow-y-auto"
+        onClick={e => e.stopPropagation()}
+      >
         <button
           onClick={onClose}
           className="absolute top-3 right-3 sm:top-4 sm:right-4 p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 min-h-[40px] min-w-[40px] flex items-center justify-center"

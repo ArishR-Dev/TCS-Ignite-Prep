@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Slide, SectionId } from '../types';
 import { SECTIONS } from '../data/allSlides';
 import { Layers, Search, Sparkles, Terminal, Database, Bookmark, BookmarkCheck, ArrowRight, Lock, AlertCircle } from 'lucide-react';
@@ -28,6 +28,15 @@ export const SlideThumbnailGrid: React.FC<SlideThumbnailGridProps> = ({
 }) => {
   const [selectedSection, setSelectedSection] = useState<SectionId | 'all' | 'bookmarks'>(initialTab);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Close on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
   const filteredSlides = useMemo(() => {
     return slides.filter(slide => {

@@ -108,27 +108,20 @@ const masterRawSlidesWithChecklist: Slide[] = [
   ...slidesHR
 ];
 
-export const allSlidesWithoutChecklist: Slide[] = standardRawSlides.map((slide, index) => ({
+export const allSlides: Slide[] = standardRawSlides.map((slide, index) => ({
   ...slide,
   slideNumber: index + 1
 }));
 
-export const allSlidesWithChecklist: Slide[] = masterRawSlidesWithChecklist.map((slide, index) => ({
-  ...slide,
-  slideNumber: index + 1
-}));
+export const allSlidesWithoutChecklist: Slide[] = allSlides;
+export const allSlidesWithChecklist: Slide[] = allSlides;
 
 /**
- * Returns the appropriate slide array based on whether Slide #2 has been completed.
- * - If completed (second visit): Slide #2 is skipped completely (73 slides).
- * - If not completed (first visit): Slide #2 appears as mandatory checklist (74 slides).
+ * Returns the standard 73 interview presentation slides.
  */
-export const getAllSlides = (isCompleted: boolean): Slide[] => {
-  return isCompleted ? allSlidesWithoutChecklist : allSlidesWithChecklist;
+export const getAllSlides = (_isCompleted?: boolean): Slide[] => {
+  return allSlides;
 };
-
-// Default export for backward compatibility
-export const allSlides: Slide[] = allSlidesWithoutChecklist;
 
 export const getSectionMeta = (sectionId: SectionId): SectionMeta | undefined => {
   return SECTIONS.find(s => s.id === sectionId);

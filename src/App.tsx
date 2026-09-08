@@ -29,16 +29,11 @@ export default function App() {
   }, [slides]);
 
   const [currentSlideIndex, setCurrentSlideIndex] = useState(() => {
-    const isDone = typeof window !== 'undefined' && localStorage.getItem('tcs_documents_slide_completed') === 'true';
     const hash = typeof window !== 'undefined' ? window.location.hash : '';
     if (hash && hash.startsWith('#slide-')) {
       const parsed = parseInt(hash.replace('#slide-', ''), 10);
       if (!isNaN(parsed) && parsed >= 1) {
-        // If not completed yet and attempted deep link beyond slide 2, reset to cover
-        if (!isDone && parsed > 2) {
-          return 0;
-        }
-        return Math.min(parsed - 1, 73);
+        return Math.min(Math.max(0, parsed - 1), 72);
       }
     }
     return 0;
@@ -119,17 +114,32 @@ export default function App() {
     setIsGridOpen(true);
   };
 
-  // Sync hash with current slide
+  // Sync hash and automatically scroll to top when slide changes
   useEffect(() => {
     window.location.hash = `slide-${currentSlideIndex + 1}`;
+    // Scroll window back to top cleanly when changing slides so new slide starts at the top
+    try {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' as ScrollBehavior });
+    } catch {
+      window.scrollTo(0, 0);
+    }
   }, [currentSlideIndex]);
 
-  const handleNext = () => {
-    const currentSlide = slides[currentSlideIndex];
-    if (!isDocsCompleted && currentSlide?.isMandatoryChecklist) {
-      triggerBlockedMessage();
-      return;
+  // Guaranteed cleanup for modal overflow lock
+  useEffect(() => {
+    const isAnyModalOpen = isGridOpen || isSearchOpen || isQuickJumpOpen || isExportOpen || isModelSelectorOpen;
+    if (isAnyModalOpen) {
+      const prevOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = prevOverflow;
+      };
+    } else {
+      document.body.style.overflow = '';
     }
+  }, [isGridOpen, isSearchOpen, isQuickJumpOpen, isExportOpen, isModelSelectorOpen]);
+
+  const handleNext = () => {
     setCurrentSlideIndex(prev => Math.min(slides.length - 1, prev + 1));
   };
 
@@ -138,10 +148,6 @@ export default function App() {
   };
 
   const handleSelectSlide = (index: number) => {
-    if (!isDocsCompleted && index > 1) {
-      triggerBlockedMessage();
-      return;
-    }
     if (index >= 0 && index < slides.length) {
       setCurrentSlideIndex(index);
     }
@@ -191,7 +197,7 @@ export default function App() {
   const currentSlide = slides[currentSlideIndex] || slides[0];
 
   return (
-    <div className="min-h-screen bg-[#070a12] text-slate-100 flex flex-col font-['Plus_Jakarta_Sans'] antialiased relative">
+    <div className="min-h-screen min-h-[100dvh] bg-[#070a12] text-slate-100 flex flex-col font-['Plus_Jakarta_Sans'] antialiased relative">
       {/* Toast Notification for Gatekeeper Action */}
       {blockedToastMessage && (
         <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-top-3 duration-200 pointer-events-none px-4">
@@ -222,7 +228,7 @@ export default function App() {
       />
 
       {/* Main Presentation Stage */}
-      <main className="flex-1 flex items-center justify-center p-2 sm:p-6 lg:p-8 pb-28 sm:pb-24">
+      <main className="flex-1 flex flex-col items-center justify-start sm:justify-center p-2 sm:p-6 lg:p-8 pb-[calc(7.5rem+env(safe-area-inset-bottom,0px))] sm:pb-[calc(6rem+env(safe-area-inset-bottom,0px))] w-full max-w-full min-w-0">
         <SlideViewer
           slide={currentSlide}
           totalSlides={slides.length}

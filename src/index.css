@@ -1,10 +1,10 @@
 @import "tailwindcss";
 
-/* Ensure root HTML and Body always respect full fluid width with no horizontal spillover */
-html, body {
+/* Fluid viewport; clip (not hidden) so iOS does not create a nested scrollport that eats the first pan */
+html, body, #root {
   width: 100%;
   max-width: 100%;
-  overflow-x: hidden;
+  overflow-x: clip;
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
 }

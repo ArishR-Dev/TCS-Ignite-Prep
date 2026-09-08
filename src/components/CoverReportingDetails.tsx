@@ -55,8 +55,8 @@ export const CoverReportingDetails: React.FC<{ isMobile?: boolean }> = ({ isMobi
       {/* Top Banner: Candidate & Date Information */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 items-stretch">
         {/* Candidate Profile Card */}
-        <div className="p-3.5 sm:p-4 rounded-xl bg-gradient-to-br from-slate-900/90 to-slate-950/90 border border-slate-700/70 shadow-lg flex items-center justify-between">
-          <div className="space-y-0.5">
+        <div className="p-3.5 sm:p-4 rounded-xl bg-gradient-to-br from-slate-900/90 to-slate-950/90 border border-slate-700/70 shadow-lg flex items-center justify-between gap-2 min-w-0">
+          <div className="space-y-0.5 min-w-0">
             <span className="text-[10px] sm:text-xs font-mono uppercase tracking-wider text-cyan-400 font-semibold flex items-center gap-1.5">
               <User className="w-3.5 h-3.5 text-cyan-400" /> Candidate Name
             </span>
@@ -73,8 +73,8 @@ export const CoverReportingDetails: React.FC<{ isMobile?: boolean }> = ({ isMobi
         </div>
 
         {/* Date & Reporting Point Card */}
-        <div className="p-3.5 sm:p-4 rounded-xl bg-gradient-to-br from-slate-900/90 to-slate-950/90 border border-slate-700/70 shadow-lg flex items-center justify-between">
-          <div className="space-y-0.5">
+        <div className="p-3.5 sm:p-4 rounded-xl bg-gradient-to-br from-slate-900/90 to-slate-950/90 border border-slate-700/70 shadow-lg flex items-center justify-between gap-2 min-w-0">
+          <div className="space-y-0.5 min-w-0">
             <span className="text-[10px] sm:text-xs font-mono uppercase tracking-wider text-cyan-400 font-semibold flex items-center gap-1.5">
               <Calendar className="w-3.5 h-3.5 text-cyan-400" /> Interview Date
             </span>

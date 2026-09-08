@@ -79,7 +79,7 @@ export const SlideViewer: React.FC<SlideViewerProps> = ({
       className={
         isExportMode
           ? 'w-[1920px] h-[1080px] p-12 flex flex-col justify-between bg-gradient-to-b from-[#0f172a] to-[#0b0f19] relative overflow-hidden select-text border border-slate-800/80 rounded-none shadow-none'
-          : `w-full max-w-6xl mx-auto flex flex-col justify-between min-h-[auto] sm:min-h-[640px] bg-gradient-to-b from-[#0f172a] to-[#0b0f19] border border-slate-800/80 rounded-xl sm:rounded-2xl ${spacing.containerPadding} shadow-2xl shadow-cyan-950/20 relative transition-all duration-300 select-text touch-pan-y`
+          : `w-full max-w-6xl mx-auto flex flex-col justify-between min-h-[auto] sm:min-h-[640px] bg-gradient-to-b from-[#0f172a] to-[#0b0f19] border border-slate-800/80 rounded-xl sm:rounded-2xl ${spacing.containerPadding} shadow-2xl shadow-cyan-950/20 relative overflow-hidden transition-all duration-300 select-text touch-pan-y`
       }
     >
       {/* Subtle background ambient tech glow */}
@@ -170,7 +170,7 @@ export const SlideViewer: React.FC<SlideViewerProps> = ({
 
           {/* ASCII Diagrams / Visual Trees */}
           {slide.content.diagram && (
-            <div data-no-slide-swipe className={`${spacing.cardPadding} rounded-xl bg-slate-950/80 border border-slate-800 ${typography.diagram} text-cyan-300 overflow-x-auto whitespace-pre shadow-inner touch-pan-x overscroll-x-contain`}>
+            <div data-no-slide-swipe className={`${spacing.cardPadding} rounded-xl bg-slate-950/80 border border-slate-800 ${typography.diagram} text-cyan-300 overflow-x-auto whitespace-pre shadow-inner touch-pan-x overscroll-x-contain min-w-0 max-w-full`}>
               {slide.content.diagram}
             </div>
           )}
@@ -204,7 +204,7 @@ export const SlideViewer: React.FC<SlideViewerProps> = ({
                       )}
                     </button>
                   </div>
-                  <pre data-no-slide-swipe className={`${spacing.cardPadding} ${typography.code} overflow-x-auto bg-[#060a12] touch-pan-x overscroll-x-contain`}>
+                  <pre data-no-slide-swipe className={`${spacing.cardPadding} ${typography.code} overflow-x-auto bg-[#060a12] touch-pan-x overscroll-x-contain min-w-0 max-w-full`}>
                     <code className="text-sky-200">
                       <CodeSyntax code={cb.code} language={cb.language} />
                     </code>
@@ -236,7 +236,7 @@ export const SlideViewer: React.FC<SlideViewerProps> = ({
                       </span>
                     )}
                   </div>
-                  <div data-no-slide-swipe className="overflow-x-auto touch-pan-x overscroll-x-contain">
+                  <div data-no-slide-swipe className="overflow-x-auto touch-pan-x overscroll-x-contain min-w-0 max-w-full">
                     <table className={`w-full text-left ${typography.table} min-w-[300px]`}>
                       <thead className="bg-slate-900 text-cyan-400 uppercase font-mono text-[9px] sm:text-xs tracking-wider border-b border-slate-800">
                         <tr>

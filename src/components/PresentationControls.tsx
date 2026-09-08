@@ -173,7 +173,7 @@ export const PresentationControls: React.FC<PresentationControlsProps> = ({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+          <div className="flex items-center gap-1 sm:gap-2 flex-shrink min-w-0 overflow-x-auto no-scrollbar touch-pan-x">
             {/* Quick My Bookmarks Button */}
             <button
               onClick={onOpenBookmarks}
@@ -302,8 +302,8 @@ export const PresentationControls: React.FC<PresentationControlsProps> = ({
       </header>
 
       {/* Floating Bottom Presentation Bar - Mobile Thumb Optimized */}
-      <footer className="fixed bottom-2 sm:bottom-3 inset-x-0 z-40 px-2 sm:px-4 pointer-events-none pb-[env(safe-area-inset-bottom,0px)] w-full max-w-full">
-        <div className="relative w-full max-w-3xl mx-auto bg-slate-900/95 backdrop-blur-lg border border-slate-700/80 rounded-2xl px-2 sm:px-4 py-1.5 sm:py-2.5 shadow-2xl shadow-black/90 flex items-center justify-between gap-1.5 sm:gap-3 pointer-events-auto overflow-hidden">
+      <footer data-app-footer className="fixed bottom-2 sm:bottom-3 inset-x-0 z-40 px-2 sm:px-4 pointer-events-none pb-[env(safe-area-inset-bottom,0px)] w-full max-w-full min-w-0">
+        <div className="relative w-full max-w-3xl mx-auto bg-slate-900/95 backdrop-blur-lg border border-slate-700/80 rounded-2xl px-2 sm:px-4 py-1.5 sm:py-2.5 shadow-2xl shadow-black/90 flex items-center justify-between gap-1.5 sm:gap-3 pointer-events-auto min-w-0">
           {/* Mobile Bottom Bar Integrated Progress Track */}
           <div className="sm:hidden absolute top-0 inset-x-0 h-[2.5px] bg-slate-800/90">
             <div
@@ -324,7 +324,7 @@ export const PresentationControls: React.FC<PresentationControlsProps> = ({
           </button>
 
           {/* Center Indicator & Slide Dropdown / Tap for Grid on Mobile */}
-          <div className="flex items-center gap-1 sm:gap-2 min-w-0">
+          <div className="flex items-center gap-1 sm:gap-2 min-w-0 overflow-x-auto no-scrollbar touch-pan-x">
             {/* Desktop dropdown */}
             <select
               value={currentIndex}

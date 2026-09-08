@@ -46,8 +46,8 @@ export const QuickSearchModal: React.FC<QuickSearchModalProps> = ({
   }).slice(0, 10);
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-start justify-center p-3 sm:p-6 pt-6 sm:pt-20 animate-in fade-in duration-150 pb-[env(safe-area-inset-bottom)]">
-      <div className="w-full max-w-2xl bg-[#0d1322] border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-start justify-center p-3 sm:p-6 pt-[max(1.5rem,env(safe-area-inset-top))] sm:pt-20 animate-in fade-in duration-150 pb-[env(safe-area-inset-bottom)]">
+      <div className="w-full max-w-2xl bg-[#0d1322] border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[min(85dvh,85vh)] min-w-0">
         {/* Search Input Bar */}
         <div className="flex items-center px-3.5 sm:px-4 py-3 sm:py-3.5 border-b border-slate-800 gap-2.5 sm:gap-3">
           <Search className="w-5 h-5 text-cyan-400 flex-shrink-0" />

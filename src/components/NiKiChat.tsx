@@ -18,7 +18,6 @@ import {
   CheckCircle2,
   Bot,
   Activity,
-  Zap,
   Globe,
   Monitor,
   ExternalLink
@@ -33,7 +32,6 @@ interface NiKiChatProps {
   onOpenSlide?: (slideNumber: number) => void;
   externalTriggerPrompt?: string | null;
   onClearExternalPrompt?: () => void;
-  onOpenModelModal?: () => void;
 }
 
 export interface ConversationStarter {
@@ -128,7 +126,7 @@ const getDynamicSuggestions = (slide: Slide | null): string[] => {
 const INITIAL_GREETING: ChatMessage = {
   id: 'greeting-msg',
   role: 'assistant',
-  text: `Hi! I'm **Eunchae ✦** — your interview prep companion 👋\n\nI can explain any slide on your screen, answer doubts from your study material, or research live technical facts on the web.\n\nAsk me anything or choose a suggested question below!`,
+  text: `Hi! I'm **Eunchae ✦** — your AI companion 👋\n\nYou can ask me **any question, doubt, coding query, or interview concept** — whether it's on your current slide, elsewhere in the handbook, or any general technical topic!\n\nType any question below or choose a starter to begin.`,
   timestamp: Date.now(),
   mode: 'chat',
   source: 'current_website'
@@ -142,8 +140,7 @@ export const NiKiChat: React.FC<NiKiChatProps> = ({
   currentSlideIndex,
   onOpenSlide,
   externalTriggerPrompt,
-  onClearExternalPrompt,
-  onOpenModelModal
+  onClearExternalPrompt
 }) => {
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
     try {
@@ -161,10 +158,10 @@ export const NiKiChat: React.FC<NiKiChatProps> = ({
   const [inputPrompt, setInputPrompt] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [searchStatus, setSearchStatus] = useState<'idle' | 'searching' | 'web_research' | 'generating'>('idle');
-  const [showDevDebug, setShowDevDebug] = useState(false);
   const [activeMode, setActiveMode] = useState<'chat' | 'interview' | 'quiz'>('chat');
   const [includeSlideContext, setIncludeSlideContext] = useState(true);
   const [showAllStarters, setShowAllStarters] = useState(false);
+  const [isHistoryCleared, setIsHistoryCleared] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
@@ -263,11 +260,20 @@ export const NiKiChat: React.FC<NiKiChatProps> = ({
   };
 
   const handleClearHistory = () => {
-    if (window.confirm('Reset conversation history with Eunchae?')) {
-      setMessages([INITIAL_GREETING]);
+    setMessages([INITIAL_GREETING]);
+    setInputPrompt('');
+    setIsLoading(false);
+    setSearchStatus('idle');
+    try {
       localStorage.removeItem('eunchae_chat_history_v1');
       localStorage.removeItem('niki_chat_history_v1');
+    } catch (e) {
+      console.error(e);
     }
+    setIsHistoryCleared(true);
+    setTimeout(() => {
+      setIsHistoryCleared(false);
+    }, 1500);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -314,14 +320,9 @@ export const NiKiChat: React.FC<NiKiChatProps> = ({
           </div>
 
           <div className="flex flex-col justify-center min-w-0">
-            <div className="flex items-center gap-2">
-              <h2 id="eunchae-chat-header" className="text-sm sm:text-base font-bold text-white font-['Plus_Jakarta_Sans'] leading-tight flex items-center gap-1.5 truncate">
-                Eunchae <span className="text-cyan-400 font-normal">✦</span>
-              </h2>
-              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-cyan-950/90 text-cyan-300 border border-cyan-700/60 leading-none">
-                AI Coach
-              </span>
-            </div>
+            <h2 id="eunchae-chat-header" className="text-sm sm:text-base font-bold text-white font-['Plus_Jakarta_Sans'] leading-tight flex items-center gap-1.5 truncate">
+              Eunchae <span className="text-cyan-400 font-normal">✦</span>
+            </h2>
             <p className="text-[11px] sm:text-xs text-slate-400 font-sans leading-tight mt-0.5 truncate">
               Your Interview Prep Companion
             </p>
@@ -329,60 +330,32 @@ export const NiKiChat: React.FC<NiKiChatProps> = ({
         </div>
 
         <div className="flex items-center gap-1.5">
-          {/* Model Switcher Badge */}
-          {onOpenModelModal && (
-            <button
-              type="button"
-              onClick={onOpenModelModal}
-              className="flex items-center gap-1 px-2 py-1 rounded-lg bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-700/60 text-cyan-300 text-[10px] font-medium transition-colors cursor-pointer shadow-xs"
-              title="Switch Model (1. Google AI vs 2. ChatGPT)"
-            >
-              <Sparkles className="w-3 h-3 text-cyan-400" />
-              <span className="font-mono hidden sm:inline">Google AI</span>
-              <span className="font-mono sm:hidden">Model</span>
-              <ChevronDown className="w-2.5 h-2.5 text-slate-400" />
-            </button>
-          )}
-
-          {/* Direct link to ChatGPT Eunchae */}
-          <a
-            href="https://chatgpt.com/g/g-6a9ffbc4796081919b9f14a3e7f2f39b-eunchae"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hidden sm:inline-flex items-center gap-1 px-1.5 py-1 rounded-lg bg-emerald-950/50 hover:bg-emerald-900/70 border border-emerald-800/40 text-emerald-300 text-[10px] font-medium transition-colors cursor-pointer"
-            title="Open Eunchae on ChatGPT GPT (opens in new tab)"
-          >
-            <Bot className="w-3 h-3 text-emerald-400" />
-            <span className="font-mono">ChatGPT</span>
-            <ExternalLink className="w-2.5 h-2.5 text-emerald-400/80" />
-          </a>
-
-          <button
-            type="button"
-            onClick={() => setShowDevDebug(prev => !prev)}
-            className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-              showDevDebug
-                ? 'text-cyan-300 bg-cyan-950 border border-cyan-700/60'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800'
-            }`}
-            title="Toggle Dev Performance Stats"
-            aria-label="Toggle Dev Performance Stats"
-          >
-            <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-          </button>
           <button
             type="button"
             onClick={handleClearHistory}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+            className={`p-2 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+              isHistoryCleared
+                ? 'text-emerald-400 bg-emerald-950/80 border border-emerald-700/60'
+                : 'text-slate-400 hover:text-white hover:bg-slate-800'
+            }`}
             title="Clear conversation history"
+            aria-label="Clear conversation history"
           >
-            <RotateCcw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            {isHistoryCleared ? (
+              <>
+                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <span className="text-[10px] font-mono font-medium text-emerald-400 hidden sm:inline">Cleared</span>
+              </>
+            ) : (
+              <RotateCcw className="w-4 h-4" />
+            )}
           </button>
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+            className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
             title="Close Eunchae (Esc)"
+            aria-label="Close Eunchae (Esc)"
           >
             <X className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
@@ -551,7 +524,7 @@ export const NiKiChat: React.FC<NiKiChatProps> = ({
                 )}
               </div>
 
-              {/* Timestamp and metadata */}
+                {/* Timestamp and metadata */}
               <div className="flex flex-col items-start gap-1 px-1">
                 <div className="flex items-center gap-1.5 text-[10px] text-slate-500 font-mono">
                   <span>{new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
@@ -559,74 +532,6 @@ export const NiKiChat: React.FC<NiKiChatProps> = ({
                     <span className="text-cyan-500/80 font-sans font-medium">• Eunchae ✦</span>
                   )}
                 </div>
-
-                {/* Development / Performance Diagnostics */}
-                {showDevDebug && !isUser && message.debugMeta && (
-                  <div className="text-[10px] font-mono text-cyan-300/90 bg-slate-900/95 border border-cyan-800/50 rounded-lg px-2.5 py-2 space-y-1 shadow-sm max-w-full">
-                    <div className="text-cyan-400 font-semibold text-[10px] flex items-center gap-1">
-                      <Zap className="w-3 h-3 text-cyan-400" />
-                      <span>Eunchae Performance & Routing</span>
-                    </div>
-                    {message.debugMeta.currentSlide && (
-                      <div className="truncate">Current Context: <span className="text-white">{message.debugMeta.currentSlide}</span></div>
-                    )}
-                    <div>Local Search: <span className="text-white">{message.debugMeta.searchTimeMs} ms</span></div>
-                    <div>Retrieved Chunks: <span className="text-white">{message.debugMeta.hitsCount}</span></div>
-                    <div>Web Search: <span className={message.debugMeta.needsWebSearch ? 'text-amber-400 font-bold' : 'text-slate-400'}>{message.debugMeta.needsWebSearch ? 'Yes' : 'No'}</span></div>
-                    <div>Memory: <span className="text-white">{message.debugMeta.memoryCount ?? 0} messages</span></div>
-                    <div>Source: <span className="text-white font-semibold">{message.debugMeta.source === 'current_website' ? 'Current Website' : message.debugMeta.source === 'web_research' ? 'Web Research' : message.debugMeta.source === 'study_material' ? 'Study Material' : 'Session Cache'}</span></div>
-                    <div>Total Latency: <span className="text-white">{message.debugMeta.totalTimeMs} ms</span> {message.debugMeta.cacheHit && <span className="text-emerald-400 font-bold ml-1">(Cache Hit)</span>}</div>
-                  </div>
-                )}
-
-                {/* Conversation Starters Deck right under the initial greeting */}
-                {message.id === 'greeting-msg' && messages.length <= 2 && (
-                  <div className="w-full mt-3 p-3 sm:p-4 rounded-2xl bg-gradient-to-b from-slate-900/95 via-slate-900/80 to-slate-950/90 border border-cyan-500/30 shadow-lg shadow-cyan-950/50 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                    <div className="flex items-center justify-between mb-2.5">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-amber-400 text-sm">⚡</span>
-                        <h3 className="text-xs font-bold text-white font-['Plus_Jakarta_Sans'] tracking-wide">
-                          TCS Ignite Conversation Starters
-                        </h3>
-                      </div>
-                      <span className="text-[10px] font-mono text-cyan-400 bg-cyan-950/80 px-2 py-0.5 rounded-full border border-cyan-800/60">
-                        5 Key Questions
-                      </span>
-                    </div>
-
-                    <p className="text-[11px] text-slate-400 mb-3">
-                      Tap any prompt below to start an interactive revision session with Eunchae:
-                    </p>
-
-                    <div className="grid grid-cols-1 gap-2">
-                      {CONVERSATION_STARTERS.map(starter => (
-                        <button
-                          key={starter.id}
-                          type="button"
-                          onClick={() => handleSendMessage(starter.prompt)}
-                          className={`group relative text-left p-2.5 sm:p-3 rounded-xl bg-gradient-to-r ${starter.gradient} border ${starter.border} transition-all cursor-pointer hover:shadow-md hover:scale-[1.01] active:scale-[0.99]`}
-                        >
-                          <div className="flex items-start gap-2.5">
-                            <span className="text-base flex-shrink-0 mt-0.5">{starter.icon}</span>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between gap-2 mb-0.5">
-                                <span className="text-xs font-bold text-white group-hover:text-cyan-200 transition-colors truncate">
-                                  {starter.title}
-                                </span>
-                                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-slate-800/80 text-slate-300 border border-slate-700/60 flex-shrink-0">
-                                  {starter.badge}
-                                </span>
-                              </div>
-                              <p className="text-[11px] text-slate-300 leading-snug font-sans line-clamp-2">
-                                "{starter.prompt}"
-                              </p>
-                            </div>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
           );
@@ -727,8 +632,8 @@ export const NiKiChat: React.FC<NiKiChatProps> = ({
                   : activeMode === 'quiz'
                   ? 'Type A, B, C, D or your quiz answer...'
                   : currentSlide
-                  ? `Ask about "${currentSlide.slideTitle}" or anything...`
-                  : 'Ask Eunchae anything about the interview material...'
+                  ? `Ask about "${currentSlide.slideTitle}" or any other topic...`
+                  : 'Ask Eunchae any question, coding query, or concept...'
               }
               rows={2}
               className="w-full bg-slate-950 border border-slate-700/80 focus:border-cyan-400 text-xs sm:text-sm text-slate-100 placeholder-slate-500 rounded-xl px-3 py-2 focus:outline-none resize-none transition-colors max-h-24 custom-scrollbar"
@@ -746,7 +651,7 @@ export const NiKiChat: React.FC<NiKiChatProps> = ({
         </form>
 
         <div className="mt-1 flex items-center justify-between text-[10px] text-slate-500 px-1">
-          <span>Grounded strictly on website preparation material</span>
+          <span>Ask any question • Grounded on handbook & live AI</span>
           <span className="hidden sm:inline font-mono">Press Enter to send</span>
         </div>
       </div>

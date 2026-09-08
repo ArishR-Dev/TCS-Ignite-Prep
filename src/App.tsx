@@ -8,7 +8,6 @@ import { QuickJumpModal } from './components/QuickJumpModal';
 import { ExportModal } from './components/ExportModal';
 import { PresentationControls } from './components/PresentationControls';
 import { EunchaeChat } from './components/EunchaeChat';
-import { EunchaeModelModal, CHATGPT_EUNCHAE_URL } from './components/EunchaeModelModal';
 import { initializeContentIndex } from './utils/eunchaeEngine';
 import { AlertCircle } from 'lucide-react';
 
@@ -59,22 +58,11 @@ export default function App() {
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isNiKiOpen, setIsNiKiOpen] = useState(false);
-  const [isModelSelectorOpen, setIsModelSelectorOpen] = useState(false);
   const [externalNiKiPrompt, setExternalNiKiPrompt] = useState<string | null>(null);
   const [blockedToastMessage, setBlockedToastMessage] = useState<string | null>(null);
 
   const handleOpenEunchae = () => {
-    setIsModelSelectorOpen(true);
-  };
-
-  const handleSelectGoogleAI = () => {
-    setIsModelSelectorOpen(false);
     setIsNiKiOpen(true);
-  };
-
-  const handleSelectChatGPT = () => {
-    setIsModelSelectorOpen(false);
-    window.open(CHATGPT_EUNCHAE_URL, '_blank', 'noopener,noreferrer');
   };
 
   const triggerBlockedMessage = () => {
@@ -141,7 +129,7 @@ export default function App() {
   // Clean modal overflow lock for body only
   useEffect(() => {
     const isAnyModalOpen =
-      isGridOpen || isSearchOpen || isQuickJumpOpen || isExportOpen || isModelSelectorOpen || isNiKiOpen;
+      isGridOpen || isSearchOpen || isQuickJumpOpen || isExportOpen || isNiKiOpen;
     if (isAnyModalOpen) {
       document.body.style.overflow = 'hidden';
       return () => {
@@ -149,7 +137,7 @@ export default function App() {
       };
     }
     document.body.style.overflow = '';
-  }, [isGridOpen, isSearchOpen, isQuickJumpOpen, isExportOpen, isModelSelectorOpen, isNiKiOpen]);
+  }, [isGridOpen, isSearchOpen, isQuickJumpOpen, isExportOpen, isNiKiOpen]);
 
   const handleNext = () => {
     if (!isDocsCompleted && currentSlideIndex >= 1) {
@@ -190,7 +178,7 @@ export default function App() {
     setExternalNiKiPrompt(
       `Hey! 👋 I want to understand Slide #${targetSlide.slideNumber}: "${targetSlide.slideTitle}". Could you explain this topic, provide an example, and share interview tips?`
     );
-    setIsModelSelectorOpen(true);
+    setIsNiKiOpen(true);
   };
 
   const toggleFullscreen = () => {
@@ -317,15 +305,6 @@ export default function App() {
         onOpenSlide={handleSelectSlide}
         externalTriggerPrompt={externalNiKiPrompt}
         onClearExternalPrompt={() => setExternalNiKiPrompt(null)}
-        onOpenModelModal={handleOpenEunchae}
-      />
-
-      {/* Eunchae AI Model Selector Modal */}
-      <EunchaeModelModal
-        isOpen={isModelSelectorOpen}
-        onClose={() => setIsModelSelectorOpen(false)}
-        onSelectGoogleAI={handleSelectGoogleAI}
-        onSelectChatGPT={handleSelectChatGPT}
       />
     </div>
   );

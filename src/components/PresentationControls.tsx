@@ -131,29 +131,29 @@ export const PresentationControls: React.FC<PresentationControlsProps> = ({
   return (
     <>
       {/* Top Header Controls Bar */}
-      <header className="sticky top-0 z-40 w-full max-w-full bg-[#090d16]/90 backdrop-blur-md border-b border-slate-800/80 px-2.5 sm:px-4 py-2 sm:py-2.5">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-1.5 sm:gap-3 w-full min-w-0">
+      <header className="sticky top-0 z-40 w-full max-w-full bg-[#090d16]/95 backdrop-blur-md border-b border-slate-800/80 px-2 sm:px-4 py-1.5 sm:py-2.5">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-1 sm:gap-3 w-full min-w-0">
           {/* Logo & Subashini Header */}
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-shrink">
+          <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 flex-shrink-0">
             <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-tr from-cyan-600 to-blue-600 flex items-center justify-center text-white font-bold font-mono text-xs sm:text-sm shadow-md shadow-cyan-900/30 flex-shrink-0">
               TI
             </div>
             <div className="min-w-0">
-              <div className="flex items-center gap-1.5 sm:gap-2">
-                <span className="font-bold text-white text-xs sm:text-sm tracking-tight font-['Plus_Jakarta_Sans'] truncate">
-                  TCS B.Sc Ignite
+              <div className="flex items-center gap-1 sm:gap-2">
+                <span className="font-bold text-white text-xs sm:text-sm tracking-tight font-['Plus_Jakarta_Sans'] whitespace-nowrap">
+                  TCS Ignite
                 </span>
-                <span className="hidden sm:inline-block px-1.5 py-0.5 rounded bg-cyan-950 text-cyan-400 border border-cyan-800/60 text-[10px] font-mono uppercase flex-shrink-0">
+                <span className="hidden xs:inline-block px-1.5 py-0.5 rounded bg-cyan-950 text-cyan-400 border border-cyan-800/60 text-[9px] sm:text-[10px] font-mono uppercase flex-shrink-0">
                   Handbook
                 </span>
               </div>
-              <p className="text-[10px] sm:text-[11px] text-slate-400 font-mono truncate max-w-[150px] xs:max-w-[200px] sm:max-w-none">
-                Prepared for <span className="text-cyan-400 font-semibold">SUBASHINI</span>
+              <p className="text-[10px] sm:text-[11px] text-slate-400 font-mono truncate max-w-[120px] xs:max-w-[180px] sm:max-w-none">
+                For <span className="text-cyan-400 font-semibold">SUBASHINI</span>
               </p>
             </div>
           </div>
 
-          {/* Center Quick Section Jump Dropdown */}
+          {/* Center Quick Section Jump Dropdown (Desktop) */}
           <div className="hidden md:flex items-center gap-1.5">
             <select
               value={currentSlide.sectionId}
@@ -172,19 +172,20 @@ export const PresentationControls: React.FC<PresentationControlsProps> = ({
             </select>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex items-center gap-1 sm:gap-2 flex-shrink min-w-0 overflow-x-auto no-scrollbar touch-pan-x">
+          {/* Action Buttons - Clean responsive layout with touch support */}
+          <div data-no-slide-swipe className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
             {/* Quick My Bookmarks Button */}
             <button
               onClick={onOpenBookmarks}
-              className={`p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg border text-xs flex items-center gap-1 sm:gap-1.5 transition-colors min-h-[36px] min-w-[36px] sm:min-h-auto sm:min-w-auto justify-center ${
+              className={`p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg border text-xs flex items-center gap-1 sm:gap-1.5 transition-colors min-h-[34px] min-w-[34px] sm:min-h-auto sm:min-w-auto justify-center ${
                 bookmarkedSlideIds.length > 0
                   ? 'bg-amber-950/40 hover:bg-amber-900/50 text-amber-300 border-amber-600/50'
-                  : 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border-slate-700'
+                  : 'bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white border-slate-700/80'
               }`}
               title="My Bookmarks (B)"
+              aria-label="Bookmarks"
             >
-              <Bookmark className={`w-3.5 h-3.5 sm:w-3.5 sm:h-3.5 ${bookmarkedSlideIds.length > 0 ? 'fill-amber-400 text-amber-400' : 'text-slate-400'}`} />
+              <Bookmark className={`w-3.5 h-3.5 ${bookmarkedSlideIds.length > 0 ? 'fill-amber-400 text-amber-400' : 'text-slate-400'}`} />
               <span className="hidden sm:inline">Bookmarks</span>
               <span className={`px-1 py-0.2 rounded text-[9px] sm:text-[10px] font-mono font-bold ${
                 bookmarkedSlideIds.length > 0 ? 'bg-amber-400 text-slate-950' : 'bg-slate-900 text-slate-400'
@@ -195,10 +196,11 @@ export const PresentationControls: React.FC<PresentationControlsProps> = ({
 
             <button
               onClick={onOpenSearch}
-              className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs flex items-center gap-1.5 border border-slate-700 transition-colors min-h-[36px] min-w-[36px] sm:min-h-auto sm:min-w-auto justify-center"
+              className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white text-xs flex items-center gap-1 sm:gap-1.5 border border-slate-700/80 transition-colors min-h-[34px] min-w-[34px] sm:min-h-auto sm:min-w-auto justify-center"
               title="Search slides (/)"
+              aria-label="Search slides"
             >
-              <Search className="w-3.5 h-3.5 sm:w-3.5 sm:h-3.5 text-cyan-400" />
+              <Search className="w-3.5 h-3.5 text-cyan-400" />
               <span className="hidden sm:inline">Search</span>
               <kbd className="hidden lg:inline font-mono text-[10px] text-slate-500 bg-slate-900 px-1 py-0.2 rounded">/</kbd>
             </button>
@@ -206,10 +208,11 @@ export const PresentationControls: React.FC<PresentationControlsProps> = ({
             {onOpenQuickJump && (
               <button
                 onClick={onOpenQuickJump}
-                className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg bg-cyan-950/70 hover:bg-cyan-900/80 text-cyan-300 hover:text-white text-xs flex items-center gap-1.5 border border-cyan-800/60 transition-colors min-h-[36px] min-w-[36px] sm:min-h-auto sm:min-w-auto justify-center"
+                className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg bg-cyan-950/80 hover:bg-cyan-900/90 text-cyan-300 hover:text-white text-xs flex items-center gap-1 sm:gap-1.5 border border-cyan-800/60 transition-colors min-h-[34px] min-w-[34px] sm:min-h-auto sm:min-w-auto justify-center"
                 title="Quick Jump to Slide (J)"
+                aria-label="Jump to slide"
               >
-                <Compass className="w-3.5 h-3.5 sm:w-3.5 sm:h-3.5 text-cyan-400" />
+                <Compass className="w-3.5 h-3.5 text-cyan-400" />
                 <span className="hidden sm:inline">Jump</span>
                 <kbd className="hidden lg:inline font-mono text-[10px] text-slate-500 bg-slate-900 px-1 py-0.2 rounded">J</kbd>
               </button>
@@ -217,27 +220,30 @@ export const PresentationControls: React.FC<PresentationControlsProps> = ({
 
             <button
               onClick={onOpenGrid}
-              className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs flex items-center gap-1.5 border border-slate-700 transition-colors min-h-[36px] min-w-[36px] sm:min-h-auto sm:min-w-auto justify-center"
+              className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white text-xs flex items-center gap-1 sm:gap-1.5 border border-slate-700/80 transition-colors min-h-[34px] min-w-[34px] sm:min-h-auto sm:min-w-auto justify-center"
               title="All slides grid (G)"
+              aria-label="All slides"
             >
-              <Grid className="w-3.5 h-3.5 sm:w-3.5 sm:h-3.5 text-cyan-400" />
+              <Grid className="w-3.5 h-3.5 text-cyan-400" />
               <span className="hidden sm:inline">Slides (73)</span>
               <kbd className="hidden lg:inline font-mono text-[10px] text-slate-500 bg-slate-900 px-1 py-0.2 rounded">G</kbd>
             </button>
 
             <button
               onClick={onOpenExport}
-              className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg bg-cyan-950/80 hover:bg-cyan-900/80 text-cyan-300 hover:text-white text-xs flex items-center gap-1.5 border border-cyan-700/60 transition-colors min-h-[36px] min-w-[36px] sm:min-h-auto sm:min-w-auto justify-center"
+              className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white text-xs flex items-center gap-1 sm:gap-1.5 border border-slate-700/80 transition-colors min-h-[34px] min-w-[34px] sm:min-h-auto sm:min-w-auto justify-center"
               title="Download PowerPoint (.pptx)"
+              aria-label="Export presentation"
             >
-              <Download className="w-3.5 h-3.5 sm:w-3.5 sm:h-3.5 text-cyan-400" />
+              <Download className="w-3.5 h-3.5 text-cyan-400" />
               <span className="hidden sm:inline">Export</span>
             </button>
 
             <button
               onClick={onToggleFullscreen}
-              className="p-1.5 sm:p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs border border-slate-700 transition-colors min-h-[36px] min-w-[36px] sm:min-h-auto sm:min-w-auto flex items-center justify-center"
+              className="p-1.5 sm:p-1.5 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white text-xs border border-slate-700/80 transition-colors min-h-[34px] min-w-[34px] sm:min-h-auto sm:min-w-auto flex items-center justify-center"
               title={isFullscreen ? 'Exit Fullscreen (F)' : 'Fullscreen (F)'}
+              aria-label={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
             >
               {isFullscreen ? <Minimize2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Maximize2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
             </button>
@@ -245,9 +251,19 @@ export const PresentationControls: React.FC<PresentationControlsProps> = ({
         </div>
 
         {/* Mobile-Friendly Quick Section Strip */}
-        <div data-no-slide-swipe className="flex md:hidden items-center gap-1.5 pt-2 pb-1 overflow-x-auto no-scrollbar touch-pan-x w-full max-w-full">
+        <div data-no-slide-swipe className="flex md:hidden items-center gap-1.5 pt-1.5 pb-0.5 overflow-x-auto no-scrollbar touch-pan-x w-full max-w-full">
           {SECTIONS.map(s => {
             const isCurrentSection = currentSlide.sectionId === s.id;
+            // Shorter readable section badge names for mobile
+            const shortTitle = s.id === 'agenda' ? 'Agenda'
+              : s.id === 'oop' ? 'OOP'
+              : s.id === 'basic_sql' ? 'Basic SQL'
+              : s.id === 'joins' ? 'SQL Joins'
+              : s.id === 'commands' ? 'Commands'
+              : s.id === 'coding_dsa' ? 'Coding'
+              : s.id === 'hr' ? 'HR Round'
+              : s.title.split(' ')[0];
+
             return (
               <button
                 key={s.id}
@@ -258,10 +274,10 @@ export const PresentationControls: React.FC<PresentationControlsProps> = ({
                 className={`px-2.5 py-1 rounded-md text-[11px] font-mono whitespace-nowrap transition-all flex-shrink-0 ${
                   isCurrentSection
                     ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/50 font-bold'
-                    : 'bg-slate-900/60 text-slate-400 border border-slate-800/80 hover:bg-slate-800'
+                    : 'bg-slate-900/60 text-slate-400 border border-slate-800/80 hover:bg-slate-800 active:bg-slate-800'
                 }`}
               >
-                {s.number}. {s.title.split(' ')[0]}
+                {s.number}. {shortTitle}
               </button>
             );
           })}

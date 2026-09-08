@@ -16,8 +16,6 @@ import {
   Layers,
   ArrowRight,
   ArrowLeft,
-  ChevronLeft,
-  ChevronRight,
   Lock
 } from 'lucide-react';
 
@@ -52,14 +50,13 @@ export const SlideViewer: React.FC<SlideViewerProps> = ({
   const { typography, spacing, isTinyMobile, isMobile } = useResponsiveSlideScale(isExportMode);
 
   // Touch gesture hook with velocity detection, visual drag feedback, and internal scroll isolation
-  const { dragOffset, swipeFeedback, containerRef } = useSlideSwipe({
+  const { swipeFeedback, containerRef } = useSlideSwipe({
     enabled: !isExportMode,
     onNext: isExportMode ? undefined : onNext,
     onPrev: isExportMode ? undefined : onPrev,
     canSwipePrev: !isExportMode && slide.slideNumber > 1,
     canSwipeNext: !isExportMode && (slide.isMandatoryChecklist ? false : slide.slideNumber < totalSlides),
     threshold: 64,
-    maxDragOffset: 70,
   });
 
   const handleCopy = (code: string, index: number) => {
@@ -77,10 +74,7 @@ export const SlideViewer: React.FC<SlideViewerProps> = ({
       style={
         isExportMode
           ? { width: '1920px', height: '1080px', minWidth: '1920px', minHeight: '1080px', boxSizing: 'border-box' }
-          : {
-              transform: dragOffset !== 0 ? `translateX(${dragOffset}px)` : undefined,
-              transition: dragOffset === 0 ? 'transform 0.25s ease-out' : 'none'
-            }
+          : undefined
       }
       className={
         isExportMode
@@ -91,29 +85,6 @@ export const SlideViewer: React.FC<SlideViewerProps> = ({
       {/* Subtle background ambient tech glow */}
       <div className="absolute -top-32 -right-32 w-72 sm:w-96 h-72 sm:h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute -bottom-32 -left-32 w-72 sm:w-96 h-72 sm:h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
-
-      {/* Real-time Visual Drag Indicator (Left / Right swipe cues) */}
-      {dragOffset !== 0 && (
-        <div
-          className={`absolute top-1/2 -translate-y-1/2 z-30 pointer-events-none transition-opacity ${
-            dragOffset > 0 ? 'left-3' : 'right-3'
-          }`}
-        >
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-cyan-500/90 text-slate-950 font-mono text-xs font-bold shadow-lg shadow-cyan-500/40 backdrop-blur-md">
-            {dragOffset > 0 ? (
-              <>
-                <ChevronLeft className="w-4 h-4" />
-                <span>Previous</span>
-              </>
-            ) : (
-              <>
-                <span>Next</span>
-                <ChevronRight className="w-4 h-4" />
-              </>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* Swipe Feedback Visual Effect on Completed Gesture */}
       {swipeFeedback && (

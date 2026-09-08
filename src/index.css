@@ -1,12 +1,11 @@
 @import "tailwindcss";
 
-/* Fluid viewport with smooth momentum scrolling */
+/* Fluid viewport with native momentum scrolling */
 html {
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
   -webkit-text-size-adjust: 100%;
-  overscroll-behavior: none;
 }
 
 body {
@@ -14,12 +13,10 @@ body {
   max-width: 100%;
   min-height: 100vh;
   min-height: 100dvh;
+  margin: 0;
+  padding: 0;
   overflow-x: hidden;
-  overflow-y: auto;
-  overscroll-behavior: none;
-  touch-action: pan-y;
   box-sizing: border-box;
-  -webkit-overflow-scrolling: touch;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -27,14 +24,6 @@ body {
   width: 100%;
   max-width: 100%;
   min-height: 100%;
-}
-
-.touch-pan-y {
-  touch-action: pan-y;
-}
-
-.touch-pan-x {
-  touch-action: pan-x;
 }
 
 *, *::before, *::after {
@@ -50,4 +39,5 @@ body {
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
 }
+
 

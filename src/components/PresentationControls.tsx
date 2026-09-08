@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Slide } from '../types';
 import { SECTIONS } from '../data/allSlides';
 import {
@@ -11,12 +11,8 @@ import {
   Download,
   Play,
   Pause,
-  Timer,
-  BookOpen,
   Bookmark,
   Compass,
-  Hash,
-  Sparkles
 } from 'lucide-react';
 import { EunchaeLogo } from './EunchaeLogo';
 
@@ -38,7 +34,97 @@ interface PresentationControlsProps {
   onOpenNiKi?: () => void;
 }
 
-export const PresentationControls: React.FC<PresentationControlsProps> = ({
+interface ActionButtonProps {
+  onClick?: () => void;
+  title: string;
+  ariaLabel: string;
+  icon: React.ReactNode;
+  label?: string;
+  shortcut?: string;
+  badge?: number | string;
+  badgeActive?: boolean;
+  active?: boolean;
+  activeClassName?: string;
+  variant?: 'default' | 'cyan';
+}
+
+const HeaderActionButton: React.FC<ActionButtonProps> = ({
+  onClick,
+  title,
+  ariaLabel,
+  icon,
+  label,
+  shortcut,
+  badge,
+  badgeActive,
+  active,
+  activeClassName,
+  variant = 'default'
+}) => {
+  const baseClasses = "p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg border text-xs flex items-center gap-1 sm:gap-1.5 transition-colors min-h-[34px] min-w-[34px] sm:min-h-auto sm:min-w-auto justify-center";
+  
+  let colorClasses = "bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white border-slate-700/80";
+  if (active && activeClassName) {
+    colorClasses = activeClassName;
+  } else if (variant === 'cyan') {
+    colorClasses = "bg-cyan-950/80 hover:bg-cyan-900/90 text-cyan-300 hover:text-white border-cyan-800/60";
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`${baseClasses} ${colorClasses}`}
+      title={title}
+      aria-label={ariaLabel}
+    >
+      {icon}
+      {label && <span className="hidden sm:inline">{label}</span>}
+      {shortcut && (
+        <kbd className="hidden lg:inline font-mono text-[10px] text-slate-500 bg-slate-900 px-1 py-0.2 rounded">
+          {shortcut}
+        </kbd>
+      )}
+      {badge !== undefined && (
+        <span
+          className={`px-1 py-0.2 rounded text-[9px] sm:text-[10px] font-mono font-bold ${
+            badgeActive ? 'bg-amber-400 text-slate-950' : 'bg-slate-900 text-slate-400'
+          }`}
+        >
+          {badge}
+        </span>
+      )}
+    </button>
+  );
+};
+
+const NavButton: React.FC<{
+  direction: 'prev' | 'next';
+  disabled: boolean;
+  onClick: () => void;
+}> = ({ direction, disabled, onClick }) => {
+  const isPrev = direction === 'prev';
+  const classes = isPrev
+    ? "flex items-center justify-center gap-1 px-2.5 sm:px-3.5 py-2 sm:py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-xs font-semibold text-slate-200 transition-colors cursor-pointer min-h-[44px] min-w-[44px] sm:min-w-[54px] flex-shrink-0"
+    : "flex items-center justify-center gap-1 px-2.5 sm:px-3.5 py-2 sm:py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 disabled:opacity-30 text-xs font-semibold text-white shadow-md shadow-cyan-900/30 transition-colors cursor-pointer min-h-[44px] min-w-[44px] sm:min-w-[54px] flex-shrink-0";
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={classes}
+      title={isPrev ? "Previous (Left Arrow or Swipe Right)" : "Next (Right Arrow or Swipe Left)"}
+      aria-label={isPrev ? "Previous slide" : "Next slide"}
+    >
+      {isPrev && <ChevronLeft className="w-4 h-4" />}
+      <span className="hidden sm:inline">{isPrev ? 'Prev' : 'Next'}</span>
+      {!isPrev && <ChevronRight className="w-4 h-4" />}
+    </button>
+  );
+};
+
+export const PresentationControls: React.FC<PresentationControlsProps> = React.memo(({
   slides,
   currentIndex,
   onSelectSlide,
@@ -56,11 +142,16 @@ export const PresentationControls: React.FC<PresentationControlsProps> = ({
   onOpenNiKi
 }) => {
   const [isAutoPlaying, setIsAutoPlaying] = useState(false);
-  const [timerSeconds, setTimerSeconds] = useState(25);
+  const [timerSeconds] = useState(25);
   const [remainingTime, setRemainingTime] = useState(25);
 
-  const currentSlide = slides[currentIndex];
-  const progressPercent = ((currentIndex + 1) / slides.length) * 100;
+  const currentSlide = slides[currentIndex] || slides[0];
+  const progressPercent = useMemo(
+    () => ((currentIndex + 1) / Math.max(1, slides.length)) * 100,
+    [currentIndex, slides.length]
+  );
+  const isCurrentBookmarked = bookmarkedSlideIds.includes(currentSlide.id);
+  const hasBookmarks = bookmarkedSlideIds.length > 0;
 
   // Auto-play interval
   useEffect(() => {
@@ -81,7 +172,7 @@ export const PresentationControls: React.FC<PresentationControlsProps> = ({
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isAutoPlaying, timerSeconds, currentIndex, onNext]);
+  }, [isAutoPlaying, timerSeconds, onNext]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -89,51 +180,73 @@ export const PresentationControls: React.FC<PresentationControlsProps> = ({
       // Don't trigger if typing in an input
       if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) return;
 
-      if (e.key === 'ArrowRight' || e.key === ' ') {
-        e.preventDefault();
-        onNext();
-      } else if (e.key === 'ArrowLeft') {
-        e.preventDefault();
-        onPrev();
-      } else if (e.key === 'b' || e.key === 'B') {
-        e.preventDefault();
-        onToggleBookmark?.(currentSlide.id);
-      } else if (e.key === 'f' || e.key === 'F') {
-        e.preventDefault();
-        onToggleFullscreen();
-      } else if (e.key === 'g' || e.key === 'G') {
-        e.preventDefault();
-        onOpenGrid();
-      } else if (e.key === 'j' || e.key === 'J') {
-        e.preventDefault();
-        onOpenQuickJump?.();
-      } else if (e.key === 'n' || e.key === 'N') {
-        e.preventDefault();
-        onOpenNiKi?.();
-      } else if (e.key === '/') {
-        e.preventDefault();
-        onOpenSearch();
-      } else if (e.key === 'Home') {
-        e.preventDefault();
-        onSelectSlide(0);
-      } else if (e.key === 'End') {
-        e.preventDefault();
-        onSelectSlide(slides.length - 1);
+      switch (e.key) {
+        case 'ArrowRight':
+        case ' ':
+          e.preventDefault();
+          onNext();
+          break;
+        case 'ArrowLeft':
+          e.preventDefault();
+          onPrev();
+          break;
+        case 'b':
+        case 'B':
+          e.preventDefault();
+          onToggleBookmark?.(currentSlide.id);
+          break;
+        case 'f':
+        case 'F':
+          e.preventDefault();
+          onToggleFullscreen();
+          break;
+        case 'g':
+        case 'G':
+          e.preventDefault();
+          onOpenGrid();
+          break;
+        case 'j':
+        case 'J':
+          e.preventDefault();
+          onOpenQuickJump?.();
+          break;
+        case 'n':
+        case 'N':
+          e.preventDefault();
+          onOpenNiKi?.();
+          break;
+        case '/':
+          e.preventDefault();
+          onOpenSearch();
+          break;
+        case 'Home':
+          e.preventDefault();
+          onSelectSlide(0);
+          break;
+        case 'End':
+          e.preventDefault();
+          onSelectSlide(slides.length - 1);
+          break;
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onNext, onPrev, onToggleFullscreen, onOpenGrid, onOpenSearch, onSelectSlide, slides.length, onToggleBookmark, currentSlide.id]);
+  }, [onNext, onPrev, onToggleFullscreen, onOpenGrid, onOpenSearch, onSelectSlide, slides.length, onToggleBookmark, onOpenQuickJump, onOpenNiKi, currentSlide.id]);
 
-  const isCurrentBookmarked = bookmarkedSlideIds.includes(currentSlide.id);
+  const handleSectionSelect = useCallback((sectionId: string) => {
+    const targetIndex = slides.findIndex(s => s.sectionId === sectionId);
+    if (targetIndex !== -1) onSelectSlide(targetIndex);
+  }, [slides, onSelectSlide]);
+
+  const handleQuickJumpOrGrid = onOpenQuickJump || onOpenGrid;
 
   return (
     <>
       {/* Top Header Controls Bar */}
       <header className="sticky top-0 z-40 w-full max-w-full bg-[#090d16]/95 backdrop-blur-md border-b border-slate-800/80 px-2 sm:px-4 py-1.5 sm:py-2.5">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-1 sm:gap-3 w-full min-w-0">
-          {/* Logo & Subashini Header */}
+          {/* Logo & Prepared for Header */}
           <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 flex-shrink-0">
             <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-tr from-cyan-600 to-blue-600 flex items-center justify-center text-white font-bold font-mono text-xs sm:text-sm shadow-md shadow-cyan-900/30 flex-shrink-0">
               TI
@@ -157,11 +270,7 @@ export const PresentationControls: React.FC<PresentationControlsProps> = ({
           <div className="hidden md:flex items-center gap-1.5">
             <select
               value={currentSlide.sectionId}
-              onChange={e => {
-                const targetSec = e.target.value;
-                const targetIndex = slides.findIndex(s => s.sectionId === targetSec);
-                if (targetIndex !== -1) onSelectSlide(targetIndex);
-              }}
+              onChange={e => handleSectionSelect(e.target.value)}
               className="bg-slate-900 border border-slate-700 text-xs text-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-cyan-400"
             >
               {SECTIONS.map(s => (
@@ -174,110 +283,81 @@ export const PresentationControls: React.FC<PresentationControlsProps> = ({
 
           {/* Action Buttons - Clean responsive layout with touch support */}
           <div data-no-slide-swipe className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
-            {/* Quick My Bookmarks Button */}
-            <button
+            <HeaderActionButton
               onClick={onOpenBookmarks}
-              className={`p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg border text-xs flex items-center gap-1 sm:gap-1.5 transition-colors min-h-[34px] min-w-[34px] sm:min-h-auto sm:min-w-auto justify-center ${
-                bookmarkedSlideIds.length > 0
-                  ? 'bg-amber-950/40 hover:bg-amber-900/50 text-amber-300 border-amber-600/50'
-                  : 'bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white border-slate-700/80'
-              }`}
               title="My Bookmarks (B)"
-              aria-label="Bookmarks"
-            >
-              <Bookmark className={`w-3.5 h-3.5 ${bookmarkedSlideIds.length > 0 ? 'fill-amber-400 text-amber-400' : 'text-slate-400'}`} />
-              <span className="hidden sm:inline">Bookmarks</span>
-              <span className={`px-1 py-0.2 rounded text-[9px] sm:text-[10px] font-mono font-bold ${
-                bookmarkedSlideIds.length > 0 ? 'bg-amber-400 text-slate-950' : 'bg-slate-900 text-slate-400'
-              }`}>
-                {bookmarkedSlideIds.length}
-              </span>
-            </button>
+              ariaLabel="Bookmarks"
+              icon={<Bookmark className={`w-3.5 h-3.5 ${hasBookmarks ? 'fill-amber-400 text-amber-400' : 'text-slate-400'}`} />}
+              label="Bookmarks"
+              badge={bookmarkedSlideIds.length}
+              badgeActive={hasBookmarks}
+              active={hasBookmarks}
+              activeClassName="bg-amber-950/40 hover:bg-amber-900/50 text-amber-300 border-amber-600/50"
+            />
 
-            <button
+            <HeaderActionButton
               onClick={onOpenSearch}
-              className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white text-xs flex items-center gap-1 sm:gap-1.5 border border-slate-700/80 transition-colors min-h-[34px] min-w-[34px] sm:min-h-auto sm:min-w-auto justify-center"
               title="Search slides (/)"
-              aria-label="Search slides"
-            >
-              <Search className="w-3.5 h-3.5 text-cyan-400" />
-              <span className="hidden sm:inline">Search</span>
-              <kbd className="hidden lg:inline font-mono text-[10px] text-slate-500 bg-slate-900 px-1 py-0.2 rounded">/</kbd>
-            </button>
+              ariaLabel="Search slides"
+              icon={<Search className="w-3.5 h-3.5 text-cyan-400" />}
+              label="Search"
+              shortcut="/"
+            />
 
             {onOpenQuickJump && (
-              <button
+              <HeaderActionButton
                 onClick={onOpenQuickJump}
-                className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg bg-cyan-950/80 hover:bg-cyan-900/90 text-cyan-300 hover:text-white text-xs flex items-center gap-1 sm:gap-1.5 border border-cyan-800/60 transition-colors min-h-[34px] min-w-[34px] sm:min-h-auto sm:min-w-auto justify-center"
                 title="Quick Jump to Slide (J)"
-                aria-label="Jump to slide"
-              >
-                <Compass className="w-3.5 h-3.5 text-cyan-400" />
-                <span className="hidden sm:inline">Jump</span>
-                <kbd className="hidden lg:inline font-mono text-[10px] text-slate-500 bg-slate-900 px-1 py-0.2 rounded">J</kbd>
-              </button>
+                ariaLabel="Jump to slide"
+                icon={<Compass className="w-3.5 h-3.5 text-cyan-400" />}
+                label="Jump"
+                shortcut="J"
+                variant="cyan"
+              />
             )}
 
-            <button
+            <HeaderActionButton
               onClick={onOpenGrid}
-              className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white text-xs flex items-center gap-1 sm:gap-1.5 border border-slate-700/80 transition-colors min-h-[34px] min-w-[34px] sm:min-h-auto sm:min-w-auto justify-center"
               title="All slides grid (G)"
-              aria-label="All slides"
-            >
-              <Grid className="w-3.5 h-3.5 text-cyan-400" />
-              <span className="hidden sm:inline">Slides (73)</span>
-              <kbd className="hidden lg:inline font-mono text-[10px] text-slate-500 bg-slate-900 px-1 py-0.2 rounded">G</kbd>
-            </button>
+              ariaLabel="All slides"
+              icon={<Grid className="w-3.5 h-3.5 text-cyan-400" />}
+              label={`Slides (${slides.length})`}
+              shortcut="G"
+            />
 
-            <button
+            <HeaderActionButton
               onClick={onOpenExport}
-              className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white text-xs flex items-center gap-1 sm:gap-1.5 border border-slate-700/80 transition-colors min-h-[34px] min-w-[34px] sm:min-h-auto sm:min-w-auto justify-center"
               title="Download PowerPoint (.pptx)"
-              aria-label="Export presentation"
-            >
-              <Download className="w-3.5 h-3.5 text-cyan-400" />
-              <span className="hidden sm:inline">Export</span>
-            </button>
+              ariaLabel="Export presentation"
+              icon={<Download className="w-3.5 h-3.5 text-cyan-400" />}
+              label="Export"
+            />
 
-            <button
+            <HeaderActionButton
               onClick={onToggleFullscreen}
-              className="p-1.5 sm:p-1.5 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white text-xs border border-slate-700/80 transition-colors min-h-[34px] min-w-[34px] sm:min-h-auto sm:min-w-auto flex items-center justify-center"
               title={isFullscreen ? 'Exit Fullscreen (F)' : 'Fullscreen (F)'}
-              aria-label={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
-            >
-              {isFullscreen ? <Minimize2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Maximize2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
-            </button>
+              ariaLabel={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
+              icon={isFullscreen ? <Minimize2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Maximize2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
+            />
           </div>
         </div>
 
         {/* Mobile-Friendly Quick Section Strip */}
-        <div data-no-slide-swipe className="flex md:hidden items-center gap-1.5 pt-1.5 pb-0.5 overflow-x-auto no-scrollbar touch-pan-x w-full max-w-full">
+        <div data-no-slide-swipe className="flex md:hidden items-center gap-1.5 pt-1.5 pb-0.5 overflow-x-auto no-scrollbar w-full max-w-full">
           {SECTIONS.map(s => {
             const isCurrentSection = currentSlide.sectionId === s.id;
-            // Shorter readable section badge names for mobile
-            const shortTitle = s.id === 'agenda' ? 'Agenda'
-              : s.id === 'oop' ? 'OOP'
-              : s.id === 'basic_sql' ? 'Basic SQL'
-              : s.id === 'joins' ? 'SQL Joins'
-              : s.id === 'commands' ? 'Commands'
-              : s.id === 'coding_dsa' ? 'Coding'
-              : s.id === 'hr' ? 'HR Round'
-              : s.title.split(' ')[0];
-
             return (
               <button
                 key={s.id}
-                onClick={() => {
-                  const targetIndex = slides.findIndex(slide => slide.sectionId === s.id);
-                  if (targetIndex !== -1) onSelectSlide(targetIndex);
-                }}
+                type="button"
+                onClick={() => handleSectionSelect(s.id)}
                 className={`px-2.5 py-1 rounded-md text-[11px] font-mono whitespace-nowrap transition-all flex-shrink-0 ${
                   isCurrentSection
                     ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/50 font-bold'
                     : 'bg-slate-900/60 text-slate-400 border border-slate-800/80 hover:bg-slate-800 active:bg-slate-800'
                 }`}
               >
-                {s.number}. {shortTitle}
+                {s.number}. {s.shortTitle || s.title.split(' ')[0]}
               </button>
             );
           })}
@@ -285,7 +365,8 @@ export const PresentationControls: React.FC<PresentationControlsProps> = ({
 
         {/* Mobile Progress Readout Bar - Interactive Quick Jump Trigger */}
         <button
-          onClick={onOpenQuickJump || onOpenGrid}
+          type="button"
+          onClick={handleQuickJumpOrGrid}
           className="flex md:hidden items-center justify-between pt-1.5 pb-1 text-[11px] font-mono w-full text-left active:opacity-85 transition-opacity cursor-pointer group"
           title="Tap to jump to any slide (J)"
         >
@@ -308,7 +389,7 @@ export const PresentationControls: React.FC<PresentationControlsProps> = ({
           </div>
         </button>
 
-        {/* Visual Progress Line (Prominent Gradient on Mobile and Desktop) */}
+        {/* Visual Progress Line */}
         <div className="w-full h-1.5 sm:h-1 bg-slate-800/90 mt-0.5 sm:mt-2 rounded-full overflow-hidden relative">
           <div
             className="h-full bg-gradient-to-r from-cyan-500 via-sky-400 to-blue-500 transition-all duration-300 ease-out rounded-full shadow-[0_0_8px_rgba(6,182,212,0.8)]"
@@ -328,19 +409,15 @@ export const PresentationControls: React.FC<PresentationControlsProps> = ({
             />
           </div>
 
-          {/* Previous Slide - 44px min touch target */}
-          <button
-            onClick={onPrev}
+          {/* Previous Slide */}
+          <NavButton
+            direction="prev"
             disabled={currentIndex <= 0}
-            className="flex items-center justify-center gap-1 px-2.5 sm:px-3.5 py-2 sm:py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-xs font-semibold text-slate-200 transition-colors cursor-pointer min-h-[44px] min-w-[44px] sm:min-w-[54px] flex-shrink-0"
-            title="Previous (Left Arrow or Swipe Right)"
-          >
-            <ChevronLeft className="w-4 h-4 sm:w-4 sm:h-4" />
-            <span className="hidden sm:inline">Prev</span>
-          </button>
+            onClick={onPrev}
+          />
 
           {/* Center Indicator & Slide Dropdown / Tap for Grid on Mobile */}
-          <div className="flex items-center gap-1 sm:gap-2 min-w-0 overflow-x-auto no-scrollbar touch-pan-x">
+          <div className="flex items-center gap-1 sm:gap-2 min-w-0 overflow-x-auto no-scrollbar">
             {/* Desktop dropdown */}
             <select
               value={currentIndex}
@@ -356,7 +433,8 @@ export const PresentationControls: React.FC<PresentationControlsProps> = ({
 
             {/* Mobile compact slide badge with progress % - Opens Quick Jump */}
             <button
-              onClick={onOpenQuickJump || onOpenGrid}
+              type="button"
+              onClick={handleQuickJumpOrGrid}
               className="sm:hidden px-1.5 sm:px-2 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-[11px] font-mono text-cyan-400 flex items-center gap-1 min-h-[40px] active:scale-95 transition-transform flex-shrink-0"
               title="Quick Jump to Slide (J)"
             >
@@ -368,7 +446,7 @@ export const PresentationControls: React.FC<PresentationControlsProps> = ({
               </span>
             </button>
 
-            {/* Dedicated Eunchae AI Assistant Button with Official Logo (in place of 'Go to') */}
+            {/* Dedicated Eunchae AI Assistant Button with Official Logo */}
             {onOpenNiKi && (
               <button
                 type="button"
@@ -391,6 +469,7 @@ export const PresentationControls: React.FC<PresentationControlsProps> = ({
 
             {/* Timer / Autoplay button */}
             <button
+              type="button"
               onClick={() => setIsAutoPlaying(!isAutoPlaying)}
               className={`p-1.5 sm:p-1.5 rounded-lg border text-xs transition-colors flex items-center gap-1 font-mono min-h-[40px] min-w-[36px] sm:min-h-auto justify-center flex-shrink-0 ${
                 isAutoPlaying
@@ -434,18 +513,15 @@ export const PresentationControls: React.FC<PresentationControlsProps> = ({
             )}
           </div>
 
-          {/* Next Slide - 44px min touch target */}
-          <button
-            onClick={onNext}
+          {/* Next Slide */}
+          <NavButton
+            direction="next"
             disabled={currentIndex >= slides.length - 1}
-            className="flex items-center justify-center gap-1 px-2.5 sm:px-3.5 py-2 sm:py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 disabled:opacity-30 text-xs font-semibold text-white shadow-md shadow-cyan-900/30 transition-colors cursor-pointer min-h-[44px] min-w-[44px] sm:min-w-[54px] flex-shrink-0"
-            title="Next (Right Arrow or Swipe Left)"
-          >
-            <span className="hidden sm:inline">Next</span>
-            <ChevronRight className="w-4 h-4 sm:w-4 sm:h-4" />
-          </button>
+            onClick={onNext}
+          />
         </div>
       </footer>
     </>
   );
-};
+});
+

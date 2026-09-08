@@ -219,10 +219,10 @@ ${webResearchData.summary ? `WEB RESEARCH RESULTS (Live Web Knowledge):\n${webRe
         parts: [{ text: currentPrompt }]
       });
 
-      // Prefer fast, highly capable gemini-3.1-flash-lite, with fallback to gemini-flash-latest and gemini-3.8-flash
-      const candidateModels = ['gemini-3.1-flash-lite', 'gemini-flash-latest', 'gemini-3.8-flash'];
+      // Use standard supported models from Google GenAI SDK: gemini-2.5-flash, gemini-2.0-flash, gemini-1.5-flash
+      const candidateModels = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
       let replyText: string | null = null;
-      let usedModel: string = 'gemini-3.1-flash-lite';
+      let usedModel: string = 'gemini-2.5-flash';
 
       for (const modelName of candidateModels) {
         try {

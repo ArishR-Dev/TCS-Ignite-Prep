@@ -121,6 +121,8 @@ export default function App() {
     // Scroll window back to top cleanly when changing slides so new slide starts at the top
     try {
       window.scrollTo({ top: 0, left: 0, behavior: 'instant' as ScrollBehavior });
+      if (document.documentElement) document.documentElement.scrollTop = 0;
+      if (document.body) document.body.scrollTop = 0;
     } catch {
       window.scrollTo(0, 0);
     }

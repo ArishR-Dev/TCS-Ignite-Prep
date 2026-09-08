@@ -11,6 +11,7 @@ export interface SectionMeta {
   id: SectionId;
   number: string;
   title: string;
+  shortTitle?: string;
   subtitle: string;
   badge: string;
   color: string;

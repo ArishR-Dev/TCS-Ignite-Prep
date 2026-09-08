@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Slide, SectionId } from '../types';
 import { SECTIONS } from '../data/allSlides';
-import { Layers, Search, Sparkles, Terminal, Database, Bookmark, BookmarkCheck, ArrowRight, Lock, AlertCircle } from 'lucide-react';
+import { Layers, Search, Sparkles, Terminal, Database, Bookmark, ArrowRight, Lock } from 'lucide-react';
 
 interface SlideThumbnailGridProps {
   slides: Slide[];
@@ -109,7 +109,7 @@ export const SlideThumbnailGrid: React.FC<SlideThumbnailGridProps> = ({
       </div>
 
       {/* Section & My Bookmarks Filter Pills */}
-      <div className="max-w-7xl w-full mx-auto py-2.5 sm:py-4 flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar touch-pan-x">
+      <div className="max-w-7xl w-full mx-auto py-2.5 sm:py-4 flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar">
         {/* All Slides Tab */}
         <button
           onClick={() => setSelectedSection('all')}

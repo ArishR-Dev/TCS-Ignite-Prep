@@ -14,6 +14,7 @@ export const SECTIONS: SectionMeta[] = [
     id: 'agenda',
     number: '01',
     title: 'Interview Agenda & Rounds',
+    shortTitle: 'Agenda',
     subtitle: 'Tower B, TCS Yeshwanthpur Protocol',
     badge: 'Logistics & Process',
     color: 'from-blue-500/20 to-cyan-500/20',
@@ -24,6 +25,7 @@ export const SECTIONS: SectionMeta[] = [
     id: 'oop',
     number: '02',
     title: 'OOP Interview Study Guide',
+    shortTitle: 'OOP',
     subtitle: 'Theory, Analogies, Python & Answers',
     badge: 'Core Programming',
     color: 'from-emerald-500/20 to-teal-500/20',
@@ -34,6 +36,7 @@ export const SECTIONS: SectionMeta[] = [
     id: 'basic_sql',
     number: '03',
     title: 'Basic SQL Study Guide',
+    shortTitle: 'Basic SQL',
     subtitle: 'SELECT, WHERE, JOIN & Operators',
     badge: 'Database Basics',
     color: 'from-amber-500/20 to-yellow-500/20',
@@ -44,6 +47,7 @@ export const SECTIONS: SectionMeta[] = [
     id: 'joins',
     number: '04',
     title: 'SQL JOINs Complete Guide',
+    shortTitle: 'SQL Joins',
     subtitle: 'All 12 Joins, Venn Sets & Cheat Sheet',
     badge: 'Relational Queries',
     color: 'from-indigo-500/20 to-purple-500/20',
@@ -54,6 +58,7 @@ export const SECTIONS: SectionMeta[] = [
     id: 'commands',
     number: '05',
     title: 'SQL Command Types',
+    shortTitle: 'Commands',
     subtitle: 'DDL, DML, DCL, TCL & Transactions',
     badge: 'SQL Architecture',
     color: 'from-pink-500/20 to-rose-500/20',
@@ -64,6 +69,7 @@ export const SECTIONS: SectionMeta[] = [
     id: 'coding_dsa',
     number: '06',
     title: 'Coding, DSA & SQL Answers',
+    shortTitle: 'Coding',
     subtitle: '25 High-Priority Problems & Normalization',
     badge: 'Technical Practice',
     color: 'from-cyan-500/20 to-blue-500/20',
@@ -74,6 +80,7 @@ export const SECTIONS: SectionMeta[] = [
     id: 'hr',
     number: '07',
     title: 'HR Round Quick Answers',
+    shortTitle: 'HR Round',
     subtitle: '17 Word-for-Word Behavioral Responses',
     badge: 'HR & Fit',
     color: 'from-purple-500/20 to-pink-500/20',
@@ -82,33 +89,18 @@ export const SECTIONS: SectionMeta[] = [
   }
 ];
 
-// Standard interview slides without the mandatory checklist (73 slides)
-const standardRawSlides: Slide[] = [
-  ...slidesCover,
-  ...slidesAgenda,
-  ...slidesOOP,
-  ...slidesBasicSQL,
-  ...slidesJoins,
-  ...slidesCommands,
-  ...slidesCoding,
-  ...slidesHR
-];
-
-// Full master presentation slides including Slide #2 Mandatory Documents Checklist (74 slides)
-const masterRawSlidesWithChecklist: Slide[] = [
-  slidesCover[0], // Slide 1: Cover
+// Canonical 73 slides with Mandatory Documents Checklist as Slide 2
+export const allSlides: Slide[] = [
+  ...slidesCover, // Slide 1: Cover
   mandatoryDocumentsSlide, // Slide 2: Mandatory Checklist
-  ...slidesCover.slice(1), // Slide 3: Preparation Roadmap & Table of Contents
-  ...slidesAgenda,
-  ...slidesOOP,
-  ...slidesBasicSQL,
-  ...slidesJoins,
-  ...slidesCommands,
-  ...slidesCoding,
-  ...slidesHR
-];
-
-export const allSlides: Slide[] = standardRawSlides.map((slide, index) => ({
+  ...slidesAgenda, // Slides 3 to 7
+  ...slidesOOP, // Slides 8 to 22
+  ...slidesBasicSQL, // Slides 23 to 29
+  ...slidesJoins, // Slides 30 to 42
+  ...slidesCommands, // Slides 43 to 47
+  ...slidesCoding, // Slides 48 to 67
+  ...slidesHR // Slides 68 to 73
+].map((slide, index) => ({
   ...slide,
   slideNumber: index + 1
 }));
@@ -117,9 +109,9 @@ export const allSlidesWithoutChecklist: Slide[] = allSlides;
 export const allSlidesWithChecklist: Slide[] = allSlides;
 
 /**
- * Returns the standard 73 interview presentation slides.
+ * Returns the canonical 73 presentation slides.
  */
-export const getAllSlides = (_isCompleted?: boolean): Slide[] => {
+export const getAllSlides = (_isCompleted: boolean = true): Slide[] => {
   return allSlides;
 };
 

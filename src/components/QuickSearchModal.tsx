@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Slide } from '../types';
-import { Search, X, Terminal, ArrowRight, BookOpen, Lock } from 'lucide-react';
+import { Search, X, ArrowRight, Lock } from 'lucide-react';
 
 interface QuickSearchModalProps {
   slides: Slide[];

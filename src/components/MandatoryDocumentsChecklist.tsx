@@ -28,9 +28,20 @@ export const MandatoryDocumentsChecklist: React.FC<MandatoryDocumentsChecklistPr
   isExportMode = false
 }) => {
   const totalItems = MANDATORY_CHECKLIST_ITEMS.length;
-  const [checkedIndices, setCheckedIndices] = useState<number[]>(() =>
-    isExportMode ? [0, 1, 2, 3, 4, 5, 6] : []
-  );
+  const [checkedIndices, setCheckedIndices] = useState<number[]>(() => {
+    try {
+      if (
+        isExportMode ||
+        localStorage.getItem('tcs_documents_slide_completed') === 'true' ||
+        localStorage.getItem('tcs_ignite_gatekeeper_completed') === 'true'
+      ) {
+        return [0, 1, 2, 3, 4, 5, 6];
+      }
+    } catch {
+      // ignore
+    }
+    return [];
+  });
   const [showWarning, setShowWarning] = useState<boolean>(false);
   const isAllChecked = checkedIndices.length === totalItems;
   const progressPercent = Math.round((checkedIndices.length / totalItems) * 100);
@@ -53,6 +64,7 @@ export const MandatoryDocumentsChecklist: React.FC<MandatoryDocumentsChecklistPr
 
     try {
       localStorage.setItem('tcs_documents_slide_completed', 'true');
+      localStorage.setItem('tcs_ignite_gatekeeper_completed', 'true');
     } catch (e) {
       console.warn('Unable to write to localStorage', e);
     }

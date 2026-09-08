@@ -79,12 +79,14 @@ export const SlideViewer: React.FC<SlideViewerProps> = ({
       className={
         isExportMode
           ? 'w-[1920px] h-[1080px] p-12 flex flex-col justify-between bg-gradient-to-b from-[#0f172a] to-[#0b0f19] relative overflow-hidden select-text border border-slate-800/80 rounded-none shadow-none'
-          : `w-full max-w-6xl mx-auto flex flex-col justify-between min-h-[auto] sm:min-h-[640px] bg-gradient-to-b from-[#0f172a] to-[#0b0f19] border border-slate-800/80 rounded-xl sm:rounded-2xl ${spacing.containerPadding} shadow-2xl shadow-cyan-950/20 relative overflow-hidden transition-all duration-300 select-text touch-pan-y`
+          : `w-full max-w-6xl mx-auto flex flex-col justify-between min-h-[auto] sm:min-h-[640px] bg-gradient-to-b from-[#0f172a] to-[#0b0f19] border border-slate-800/80 rounded-xl sm:rounded-2xl ${spacing.containerPadding} shadow-2xl shadow-cyan-950/20 relative transition-all duration-300 select-text`
       }
     >
-      {/* Subtle background ambient tech glow */}
-      <div className="absolute -top-32 -right-32 w-72 sm:w-96 h-72 sm:h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-32 -left-32 w-72 sm:w-96 h-72 sm:h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
+      {/* Subtle background ambient tech glow (clipped here so the slide itself is not a scroll trap) */}
+      <div className="absolute inset-0 overflow-hidden rounded-xl sm:rounded-2xl pointer-events-none" aria-hidden="true">
+        <div className="absolute -top-32 -right-32 w-72 sm:w-96 h-72 sm:h-96 bg-cyan-500/10 rounded-full blur-3xl" />
+        <div className="absolute -bottom-32 -left-32 w-72 sm:w-96 h-72 sm:h-96 bg-blue-600/10 rounded-full blur-3xl" />
+      </div>
 
       {/* Swipe Feedback Visual Effect on Completed Gesture */}
       {swipeFeedback && (

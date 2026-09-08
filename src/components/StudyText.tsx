@@ -50,23 +50,21 @@ const HIGHLIGHT_TERMS = [
   'TCL',
 ];
 
-const TERM_REGEX = new RegExp(`\\b(${HIGHLIGHT_TERMS.map(escapeRegExp).join('|')})\\b`, 'g');
-
-const COMPLEXITY_REGEX = /O\([^)]+\)/g;
-
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-export const StudyText: React.FC<{ text: string; className?: string }> = ({ text, className }) => {
+const HIGHLIGHT_SOURCE = `\\b(${HIGHLIGHT_TERMS.map(escapeRegExp).join('|')})\\b|O\\([^)]+\\)`;
+
+export const StudyText: React.FC<{ text: string; className?: string }> = React.memo(({ text, className }) => {
   if (!text) return null;
 
   const pieces: React.ReactNode[] = [];
   let cursor = 0;
-  const combined = new RegExp(`${TERM_REGEX.source}|${COMPLEXITY_REGEX.source}`, 'g');
+  const highlightRegex = new RegExp(HIGHLIGHT_SOURCE, 'g');
   let match: RegExpExecArray | null;
 
-  while ((match = combined.exec(text)) !== null) {
+  while ((match = highlightRegex.exec(text)) !== null) {
     if (match.index > cursor) {
       pieces.push(text.slice(cursor, match.index));
     }
@@ -92,7 +90,7 @@ export const StudyText: React.FC<{ text: string; className?: string }> = ({ text
   }
 
   return <span className={className}>{pieces}</span>;
-};
+});
 
 export const StudyMultiline: React.FC<{ text: string; className?: string }> = ({ text, className }) => {
   const lines = text.split('\n');

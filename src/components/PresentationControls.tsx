@@ -15,8 +15,10 @@ import {
   BookOpen,
   Bookmark,
   Compass,
-  Hash
+  Hash,
+  Sparkles
 } from 'lucide-react';
+import { EunchaeLogo } from './EunchaeLogo';
 
 interface PresentationControlsProps {
   slides: Slide[];
@@ -33,6 +35,7 @@ interface PresentationControlsProps {
   onToggleBookmark?: (slideId: string) => void;
   onOpenBookmarks?: () => void;
   onOpenQuickJump?: () => void;
+  onOpenNiKi?: () => void;
 }
 
 export const PresentationControls: React.FC<PresentationControlsProps> = ({
@@ -49,7 +52,8 @@ export const PresentationControls: React.FC<PresentationControlsProps> = ({
   bookmarkedSlideIds = [],
   onToggleBookmark,
   onOpenBookmarks,
-  onOpenQuickJump
+  onOpenQuickJump,
+  onOpenNiKi
 }) => {
   const [isAutoPlaying, setIsAutoPlaying] = useState(false);
   const [timerSeconds, setTimerSeconds] = useState(25);
@@ -103,6 +107,9 @@ export const PresentationControls: React.FC<PresentationControlsProps> = ({
       } else if (e.key === 'j' || e.key === 'J') {
         e.preventDefault();
         onOpenQuickJump?.();
+      } else if (e.key === 'n' || e.key === 'N') {
+        e.preventDefault();
+        onOpenNiKi?.();
       } else if (e.key === '/') {
         e.preventDefault();
         onOpenSearch();
@@ -345,15 +352,20 @@ export const PresentationControls: React.FC<PresentationControlsProps> = ({
               </span>
             </button>
 
-            {/* Mobile Dedicated 'Go to' Slide Quick Jump Button */}
-            {onOpenQuickJump && (
+            {/* Dedicated Eunchae AI Assistant Button with Official Logo (in place of 'Go to') */}
+            {onOpenNiKi && (
               <button
-                onClick={onOpenQuickJump}
-                className="sm:hidden px-2 py-1.5 rounded-lg bg-cyan-950/90 hover:bg-cyan-900 border border-cyan-700/70 text-cyan-300 text-[11px] font-mono font-semibold flex items-center gap-1 min-h-[38px] cursor-pointer active:scale-95 transition-all shadow-sm"
-                title="Go to slide number (J)"
+                type="button"
+                id="eunchae-activation-button"
+                onClick={onOpenNiKi}
+                className="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl bg-gradient-to-r from-cyan-950 via-slate-900 to-indigo-950 hover:from-cyan-900 hover:to-indigo-900 border border-cyan-500/60 hover:border-cyan-400 text-cyan-200 hover:text-white text-xs font-semibold flex items-center gap-2 min-h-[38px] cursor-pointer active:scale-95 transition-all shadow-md shadow-cyan-950/80 group"
+                title="Open Eunchae - Your AI Interview Prep Companion (N)"
+                aria-label="Open Eunchae AI Assistant"
               >
-                <Compass className="w-3.5 h-3.5 text-cyan-400" />
-                <span>Go to</span>
+                <EunchaeLogo size={24} showSparkle={true} glow={true} alt="Eunchae AI Assistant" />
+                <span className="font-bold font-['Plus_Jakarta_Sans'] text-white group-hover:text-cyan-200 transition-colors text-[11px] sm:text-xs whitespace-nowrap flex items-center gap-1">
+                  Eunchae <span className="text-cyan-400">✦</span>
+                </span>
               </button>
             )}
 

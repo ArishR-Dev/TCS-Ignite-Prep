@@ -29,6 +29,7 @@ interface SlideViewerProps {
   onToggleBookmark?: (slideId: string) => void;
   onCompleteDocuments?: () => void;
   onAttemptBlockedNext?: () => void;
+  onAskNiKi?: (slide: Slide) => void;
 }
 
 export const SlideViewer: React.FC<SlideViewerProps> = ({
@@ -39,7 +40,8 @@ export const SlideViewer: React.FC<SlideViewerProps> = ({
   isBookmarked = false,
   onToggleBookmark,
   onCompleteDocuments,
-  onAttemptBlockedNext
+  onAttemptBlockedNext,
+  onAskNiKi
 }) => {
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 

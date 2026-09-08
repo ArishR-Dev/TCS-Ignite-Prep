@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { Slide } from './types';
 import { getAllSlides } from './data/allSlides';
 import { SlideViewer } from './components/SlideViewer';
 import { SlideThumbnailGrid } from './components/SlideThumbnailGrid';
@@ -6,6 +7,8 @@ import { QuickSearchModal } from './components/QuickSearchModal';
 import { QuickJumpModal } from './components/QuickJumpModal';
 import { ExportModal } from './components/ExportModal';
 import { PresentationControls } from './components/PresentationControls';
+import { EunchaeChat } from './components/EunchaeChat';
+import { initializeContentIndex } from './utils/eunchaeEngine';
 import { AlertCircle } from 'lucide-react';
 
 export default function App() {
@@ -18,6 +21,11 @@ export default function App() {
   });
 
   const slides = useMemo(() => getAllSlides(isDocsCompleted), [isDocsCompleted]);
+
+  // Warm and pre-index all slides for instant sub-millisecond search retrieval
+  useEffect(() => {
+    initializeContentIndex(slides);
+  }, [slides]);
 
   const [currentSlideIndex, setCurrentSlideIndex] = useState(() => {
     const isDone = typeof window !== 'undefined' && localStorage.getItem('tcs_documents_slide_completed') === 'true';
@@ -41,6 +49,8 @@ export default function App() {
   const [isQuickJumpOpen, setIsQuickJumpOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isNiKiOpen, setIsNiKiOpen] = useState(false);
+  const [externalNiKiPrompt, setExternalNiKiPrompt] = useState<string | null>(null);
   const [blockedToastMessage, setBlockedToastMessage] = useState<string | null>(null);
 
   const triggerBlockedMessage = () => {
@@ -133,6 +143,13 @@ export default function App() {
     setBlockedToastMessage(null);
   };
 
+  const handleAskNiKiAboutSlide = (targetSlide: Slide) => {
+    setIsNiKiOpen(true);
+    setExternalNiKiPrompt(
+      `Hey! 👋 I want to understand Slide #${targetSlide.slideNumber}: "${targetSlide.slideTitle}". Could you explain this topic, provide an example, and share interview tips?`
+    );
+  };
+
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen().catch(err => {
@@ -185,6 +202,7 @@ export default function App() {
         bookmarkedSlideIds={bookmarkedSlideIds}
         onToggleBookmark={handleToggleBookmark}
         onOpenQuickJump={() => setIsQuickJumpOpen(true)}
+        onOpenNiKi={() => setIsNiKiOpen(true)}
       />
 
       {/* Main Presentation Stage */}
@@ -198,6 +216,7 @@ export default function App() {
           onToggleBookmark={handleToggleBookmark}
           onCompleteDocuments={handleCompleteDocuments}
           onAttemptBlockedNext={triggerBlockedMessage}
+          onAskNiKi={handleAskNiKiAboutSlide}
         />
       </main>
 
@@ -243,6 +262,16 @@ export default function App() {
         slides={slides}
         isOpen={isExportOpen}
         onClose={() => setIsExportOpen(false)}
+      />
+
+      {/* Eunchae AI Assistant Chat Panel */}
+      <EunchaeChat
+        isOpen={isNiKiOpen}
+        onClose={() => setIsNiKiOpen(false)}
+        currentSlide={currentSlide}
+        onOpenSlide={handleSelectSlide}
+        externalTriggerPrompt={externalNiKiPrompt}
+        onClearExternalPrompt={() => setExternalNiKiPrompt(null)}
       />
     </div>
   );
